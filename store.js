@@ -19,26 +19,26 @@ const COLLECTIONS = {
 };
 
 const DEFAULT_SERVICES = [
-  { id: 1, name: 'Globoplay + Canais', cost: 7, suggested: 20, marketPrice: 54.90 },
-  { id: 2, name: 'Globoplay + Canais + Telecine', cost: 8, suggested: 25, marketPrice: 69.90 },
-  { id: 3, name: 'Globoplay + Canais + Premiere', cost: 8, suggested: 30, marketPrice: 89.90 },
+  { id: 1, name: 'Globoplay + Canais', cost: 7, suggested: 15, marketPrice: 54.90 },
+  { id: 2, name: 'Globoplay + Canais + Telecine', cost: 8, suggested: 20, marketPrice: 69.90 },
+  { id: 3, name: 'Globoplay + Canais + Premiere', cost: 8, suggested: 23, marketPrice: 89.90 },
   { id: 4, name: 'Claro tv+', cost: 8, suggested: 25, marketPrice: 59.90 },
   { id: 5, name: 'Premiere', cost: 6, suggested: 12, marketPrice: 59.90 },
   { id: 6, name: 'HBO Max Premium', cost: 10, suggested: 18, marketPrice: 34.90 },
   { id: 7, name: 'Disney Premium', cost: 10, suggested: 18, marketPrice: 33.90 },
-  { id: 8, name: 'Paramount+', cost: 7, suggested: 12.50, marketPrice: 19.90 },
-  { id: 9, name: 'Prime Video', cost: 6, suggested: 11, marketPrice: 14.90 },
-  { id: 10, name: 'Prime Video + 5 adicionais', cost: 12.90, suggested: 20.40, marketPrice: 50.00 },
-  { id: 11, name: 'Prime Video + 9 adicionais', cost: 16.90, suggested: 26.40, marketPrice: 70.00 },
+  { id: 8, name: 'Paramount+', cost: 7, suggested: 15, marketPrice: 19.90 },
+  { id: 9, name: 'Prime Video', cost: 6, suggested: 12, marketPrice: 14.90 },
+  { id: 10, name: 'Prime Video + 5 adicionais', cost: 12.90, suggested: 22.90, marketPrice: 50.00 },
+  { id: 11, name: 'Prime Video + 9 adicionais', cost: 16.90, suggested: 29.90, marketPrice: 70.00 },
   { id: 12, name: 'PlayPlus', cost: 8, suggested: 14, marketPrice: 15.90 },
-  { id: 13, name: 'ChatGPT', cost: 19.90, suggested: 40, marketPrice: 99.00 },
+  { id: 13, name: 'ChatGPT', cost: 19.90, suggested: 45, marketPrice: 99.00 },
   { id: 14, name: 'YouTube Premium (Anual)', cost: 65, suggested: 120, marketPrice: 249.00 },
   { id: 15, name: 'Canva Pro (Anual)', cost: 55, suggested: 100, marketPrice: 289.00 },
   { id: 16, name: 'Produto digital', cost: 10, suggested: 25, marketPrice: 40.00 }
 ];
 
 const DEFAULT_SETTINGS = {
-  pixKey: 'Sua Chave PIX Aqui'
+  pixKey: '(81) 99527-5520'
 };
 
 // Local cache

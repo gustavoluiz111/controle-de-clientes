@@ -4,6 +4,7 @@ import { DataStore } from './store.js';
 // App State
 let currentView = 'dashboard';
 let searchTerm = '';
+let statusFilter = 'Todos';
 
 // Initialize Icons
 const initIcons = () => {
@@ -107,13 +108,37 @@ const renderDashboard = async (container) => {
 
   const activeCount = customers.filter(c => c.status === 'Ativo').length;
   const expiredCount = customers.filter(c => c.status === 'Vencido').length;
-  const revenue = customers.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
-  const cost = customers.reduce((sum, c) => sum + (parseFloat(c.costPrice) || 0), 0);
+  const activeCustomers = customers.filter(c => c.status === 'Ativo');
+
+  const revenue = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
+  const cost = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.costPrice) || 0), 0);
   const profit = revenue - cost;
+
+  const ticketMedio = activeCount > 0 ? revenue / activeCount : 0;
+
+  // Calc service stats
+  const serviceCounts = {};
+  const serviceProfits = {};
+  activeCustomers.forEach(c => {
+    serviceCounts[c.service] = (serviceCounts[c.service] || 0) + 1;
+    serviceProfits[c.service] = (serviceProfits[c.service] || 0) + (c.sellPrice - c.costPrice);
+  });
+
+  let topService = '-';
+  let topServiceCount = 0;
+  for (const [srv, count] of Object.entries(serviceCounts)) {
+    if (count > topServiceCount) { topServiceCount = count; topService = srv; }
+  }
+
+  let topProfitService = '-';
+  let maxProfit = 0;
+  for (const [srv, prof] of Object.entries(serviceProfits)) {
+    if (prof > maxProfit) { maxProfit = prof; topProfitService = srv; }
+  }
 
   container.innerHTML = `
     <h1 class="mb-4">Dashboard Geral</h1>
-    <div class="stats-grid">
+    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
       <div class="stat-card active">
         <span class="label">Clientes Ativos</span>
         <span class="value">${activeCount}</span>
@@ -125,7 +150,7 @@ const renderDashboard = async (container) => {
         <i data-lucide="alert-circle" class="icon-bg"></i>
       </div>
       <div class="stat-card revenue">
-        <span class="label">Faturamento Total</span>
+        <span class="label">Faturamento Mensal</span>
         <span class="value">R$ ${revenue.toFixed(2)}</span>
         <i data-lucide="trending-up" class="icon-bg"></i>
       </div>
@@ -134,9 +159,24 @@ const renderDashboard = async (container) => {
         <span class="value">R$ ${profit.toFixed(2)}</span>
         <i data-lucide="dollar-sign" class="icon-bg"></i>
       </div>
+      <div class="stat-card" style="background: var(--blue-petroleum); color: white;">
+        <span class="label" style="opacity: 0.8;">Ticket Médio</span>
+        <span class="value">R$ ${ticketMedio.toFixed(2)}</span>
+        <i data-lucide="receipt" class="icon-bg" style="opacity: 0.1;"></i>
+      </div>
+      <div class="stat-card" style="background: var(--navy-dark); color: white;">
+        <span class="label" style="opacity: 0.8;">Mais Vendido</span>
+        <span class="value" style="font-size: 1.2rem; margin-top: 5px;">${topService}</span>
+        <i data-lucide="award" class="icon-bg" style="opacity: 0.1;"></i>
+      </div>
+      <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color);">
+        <span class="label">Mais Lucrativo</span>
+        <span class="value" style="font-size: 1.1rem; color: #059669; margin-top: 5px;">${topProfitService}</span>
+        <i data-lucide="trending-up" class="icon-bg"></i>
+      </div>
     </div>
 
-    <div class="charts-section" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+    <div class="charts-section" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
       <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color);">
         <h3>Faturamento vs Lucro</h3>
         <canvas id="mainChart" height="200"></canvas>
@@ -146,8 +186,8 @@ const renderDashboard = async (container) => {
         <div id="expiring-list" style="margin-top: 15px;">
           ${customers.filter(c => {
     const diff = (new Date(c.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
-    return diff >= 0 && diff <= 5;
-  }).map(c => `
+    return diff >= 0 && diff <= 5 && c.status === 'Ativo';
+  }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).map(c => `
             <div style="padding: 10px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <div style="font-weight: 600; font-size: 0.9rem;">${c.name}</div>
@@ -204,37 +244,52 @@ const initChart = (revenue, profit) => {
 // --- Customers Module ---
 const renderCustomers = async (container) => {
   const allCustomers = await DataStore.getCustomers();
-  const filtered = allCustomers.filter(c =>
-    c.name.toLowerCase().includes(searchTerm) ||
-    c.service.toLowerCase().includes(searchTerm)
-  );
+  const filtered = allCustomers.filter(c => {
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm) || c.service.toLowerCase().includes(searchTerm);
+    const matchesStatus = statusFilter === 'Todos' || c.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   container.innerHTML = `
-    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
       <h1>Gestão de Clientes</h1>
-      <button class="btn btn-primary" id="addCustBtn">
-        <i data-lucide="plus"></i> Novo Cliente
-      </button>
+      <div style="display: flex; gap: 15px; align-items: center;">
+        <select id="statusFilter" style="padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-family: inherit; outline: none;">
+          <option value="Todos" ${statusFilter === 'Todos' ? 'selected' : ''}>Todos os Status</option>
+          <option value="Ativo" ${statusFilter === 'Ativo' ? 'selected' : ''}>Ativos</option>
+          <option value="Vencido" ${statusFilter === 'Vencido' ? 'selected' : ''}>Vencidos</option>
+          <option value="Cancelado" ${statusFilter === 'Cancelado' ? 'selected' : ''}>Cancelados</option>
+        </select>
+        <button class="btn btn-primary" id="addCustBtn">
+          <i data-lucide="plus"></i> Novo Cliente
+        </button>
+      </div>
     </div>
 
-    <div class="table-card card" style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow: hidden; border: 1px solid var(--border-color);">
-      <table class="data-table" style="width: 100%; border-collapse: collapse;">
+    <div class="table-card card" style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow-x: auto; border: 1px solid var(--border-color);">
+      <table class="data-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
         <thead style="background: var(--bg-main); text-align: left;">
           <tr>
             <th style="padding: 15px;">Cliente</th>
             <th style="padding: 15px;">Serviço</th>
             <th style="padding: 15px;">Vencimento</th>
             <th style="padding: 15px;">Status</th>
-            <th style="padding: 15px;">Lucro</th>
+            <th style="padding: 15px;">Lucro / Margem</th>
             <th style="padding: 15px; text-align: right;">Ações</th>
           </tr>
         </thead>
         <tbody>
-          ${filtered.map(c => `
+          ${filtered.map(c => {
+    const profit = c.sellPrice - c.costPrice;
+    const margin = c.sellPrice > 0 ? ((profit / c.sellPrice) * 100).toFixed(1) : 0;
+    return `
             <tr>
-              <td style="padding: 15px; font-weight: 500;">${c.name}</td>
+              <td style="padding: 15px; font-weight: 500;">
+                <div>${c.name}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${c.whatsapp || '-'}</div>
+              </td>
               <td style="padding: 15px;">${c.service}</td>
-              <td style="padding: 15px;">${new Date(c.dueDate).toLocaleDateString('pt-BR')}</td>
+              <td style="padding: 15px; font-weight: 600; color: ${c.status === 'Vencido' ? 'var(--red-vibrant)' : 'inherit'}">${new Date(c.dueDate).toLocaleDateString('pt-BR')}</td>
               <td style="padding: 15px;">
                 <span class="badge" style="padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; 
                   background: ${c.status === 'Ativo' ? '#d1fae5' : c.status === 'Vencido' ? '#fee2e2' : '#f1f5f9'};
@@ -242,20 +297,49 @@ const renderCustomers = async (container) => {
                   ${c.status}
                 </span>
               </td>
-              <td style="padding: 15px; color: #059669; font-weight: 600;">R$ ${(c.sellPrice - c.costPrice).toFixed(2)}</td>
-              <td style="padding: 15px; text-align: right; display: flex; gap: 8px; justify-content: flex-end;">
-                <button class="btn-icon" onclick="window.generateMessage('${c.id}')" title="Gerar Mensagem"><i data-lucide="message-square"></i></button>
+              <td style="padding: 15px;">
+                <div style="color: #059669; font-weight: 600;">R$ ${profit.toFixed(2)}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${margin}% Margem</div>
+              </td>
+              <td style="padding: 15px; text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+                ${c.status !== 'Ativo' ? `<button class="btn-icon" onclick="window.updateCustomerStatus('${c.id}', 'Ativo')" title="Marcar como Renovado/Ativo" style="color: #059669;"><i data-lucide="check-circle"></i></button>` : ''}
+                ${c.status !== 'Cancelado' ? `<button class="btn-icon" onclick="window.updateCustomerStatus('${c.id}', 'Cancelado')" title="Marcar como Cancelado"><i data-lucide="x-circle"></i></button>` : ''}
+                <button class="btn-icon" onclick="window.generateMessage('${c.id}')" title="Gerar Mensagem" style="color: var(--blue-petroleum)"><i data-lucide="message-square"></i></button>
                 <button class="btn-icon" onclick="window.editCustomer('${c.id}')" title="Editar"><i data-lucide="edit"></i></button>
                 <button class="btn-icon" onclick="window.deleteCustomer('${c.id}')" title="Excluir" style="color: var(--red-vibrant)"><i data-lucide="trash"></i></button>
               </td>
             </tr>
-          `).join('') || '<tr><td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">Nenhum cliente cadastrado.</td></tr>'}
+          `}).join('') || '<tr><td colspan="6" style="padding: 40px; text-align: center; color: var(--text-muted);">Nenhum cliente encontrado.</td></tr>'}
         </tbody>
       </table>
     </div>
   `;
   document.getElementById('addCustBtn').onclick = () => window.showCustomerModal();
+
+  const filterSelect = document.getElementById('statusFilter');
+  if (filterSelect) {
+    filterSelect.onchange = (e) => {
+      statusFilter = e.target.value;
+      renderView();
+    };
+  }
+
   initIcons();
+};
+
+window.updateCustomerStatus = async (id, newStatus) => {
+  const customers = await DataStore.getCustomers();
+  const customer = customers.find(c => String(c.id) === String(id));
+  if (customer) {
+    customer.status = newStatus;
+    if (newStatus === 'Ativo') {
+      // Simplification for renewal
+      const currentDue = new Date(customer.dueDate);
+      currentDue.setMonth(currentDue.getMonth() + 1);
+      customer.dueDate = currentDue.toISOString().split('T')[0];
+    }
+    await DataStore.saveCustomer(customer);
+  }
 };
 
 window.showCustomerModal = async (customer = null) => {
@@ -290,6 +374,17 @@ window.showCustomerModal = async (customer = null) => {
         <label>Venda</label>
         <input type="number" step="0.01" name="sellPrice" id="sellPrice" value="${customer?.sellPrice || ''}" required>
       </div>
+      
+      <!-- Campos de Cálculo Automático -->
+      <div class="form-group">
+        <label>Lucro Automático (R$)</label>
+        <input type="text" id="autoProfit" value="R$ 0.00" readonly style="background: var(--bg-main); font-weight: 600; color: #059669;">
+      </div>
+      <div class="form-group">
+        <label>Margem (%)</label>
+        <input type="text" id="autoMargin" value="0%" readonly style="background: var(--bg-main); font-weight: 600; color: #059669;">
+      </div>
+
       <div class="form-group">
         <label>Data Início</label>
         <input type="date" name="startDate" value="${customer?.startDate || new Date().toISOString().split('T')[0]}" required>
@@ -306,6 +401,11 @@ window.showCustomerModal = async (customer = null) => {
           <option value="Cancelado" ${customer?.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
         </select>
       </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Observações</label>
+        <textarea name="observations" rows="2" placeholder="Informações extras do cliente...">${customer?.observations || ''}</textarea>
+      </div>
+      
       <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 20px;">
         <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Cliente</button>
         <button type="button" class="btn" id="closeModalBtn" style="background: var(--bg-main);">Cancelar</button>
@@ -318,14 +418,36 @@ window.showCustomerModal = async (customer = null) => {
 
   const form = document.getElementById('customerForm');
   const serviceSelector = document.getElementById('serviceSelector');
+  const costInput = document.getElementById('costPrice');
+  const sellInput = document.getElementById('sellPrice');
+  const profitOutput = document.getElementById('autoProfit');
+  const marginOutput = document.getElementById('autoMargin');
+
+  const updateCalculations = () => {
+    const cost = parseFloat(costInput.value) || 0;
+    const sell = parseFloat(sellInput.value) || 0;
+    const profit = sell - cost;
+    const margin = sell > 0 ? ((profit / sell) * 100).toFixed(1) : 0;
+
+    profitOutput.value = `R$ ${profit.toFixed(2)}`;
+    marginOutput.value = `${margin}%`;
+  };
+
+  // Attach event listeners for real-time updates
+  costInput.addEventListener('input', updateCalculations);
+  sellInput.addEventListener('input', updateCalculations);
 
   serviceSelector.onchange = () => {
     const s = services.find(x => x.id == serviceSelector.value);
     if (s) {
-      document.getElementById('costPrice').value = s.cost;
-      document.getElementById('sellPrice').value = s.suggested;
+      costInput.value = s.cost;
+      sellInput.value = s.suggested;
+      updateCalculations();
     }
   };
+
+  // Initial calculation if editing
+  if (customer) updateCalculations();
 
   form.onsubmit = async (e) => {
     e.preventDefault();
@@ -342,7 +464,8 @@ window.showCustomerModal = async (customer = null) => {
       sellPrice: parseFloat(fd.get('sellPrice')),
       startDate: fd.get('startDate'),
       dueDate: fd.get('dueDate'),
-      status: fd.get('status')
+      status: fd.get('status'),
+      observations: fd.get('observations')
     };
 
     await DataStore.saveCustomer(newCustomer);
@@ -368,8 +491,8 @@ window.generateMessage = async (id) => {
   const settings = await DataStore.getSettings();
   const isRenewal = customer.status === 'Vencido';
 
-  let msg = isRenewal ? `Olá, ${customer.name}! 👋\nSua assinatura de ${customer.service} vence em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\nPara renovar por R$ ${customer.sellPrice.toFixed(2)}, envie o PIX na chave abaixo:\n\nChave PIX: ${settings.pixKey}\n\nAssim que confirmar, já renovo pra você 👍`
-    : `Olá, ${customer.name}! 👋\nO serviço ${customer.service} está disponível por R$ ${customer.sellPrice.toFixed(2)} mensal.\n\nFunciona assim:\n• Acesso individual\n• Pode usar na TV, celular ou computador\n• Suporte durante a assinatura\n\nPagamento via PIX:\nChave: ${settings.pixKey}\n\nApós o pagamento, envio o acesso imediatamente.`;
+  let msg = isRenewal ? `Olá, ${customer.name} ! 👋\nSua assinatura de ${customer.service} vence em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\nPara renovar por R$ ${customer.sellPrice.toFixed(2)}, envie o PIX na chave abaixo: \n\nChave PIX: ${settings.pixKey} \n\nAssim que confirmar, já renovo pra você 👍`
+    : `Olá, ${customer.name} ! 👋\nO serviço ${customer.service} está disponível por R$ ${customer.sellPrice.toFixed(2)} mensal.\n\nFunciona assim: \n• Acesso individual\n• Pode usar na TV, celular ou computador\n• Suporte durante a assinatura\n\nPagamento via PIX: \nChave: ${settings.pixKey} \n\nApós o pagamento, envio o acesso imediatamente.`;
 
   const modal = document.getElementById('modal-container');
   document.getElementById('modal-title').innerText = 'Mensagem Gerada';
@@ -398,14 +521,36 @@ const renderServices = async (container) => {
     </div>
     <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
       ${filtered.map(s => {
-    const count = customers.filter(c => String(c.serviceId) === String(s.id) && c.status === 'Ativo').length;
+    const activeClients = customers.filter(c => String(c.serviceId) === String(s.id) && c.status === 'Ativo');
+    const count = activeClients.length;
+    const profitPerUnit = s.suggested - s.cost;
+    const margin = s.suggested > 0 ? ((profitPerUnit / s.suggested) * 100).toFixed(1) : 0;
+    const totalProfit = count * profitPerUnit;
+
     return `
-          <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color);">
-            <h3 style="margin-bottom: 10px;">${s.name}</h3>
-            <div style="font-size: 0.9rem; color: var(--text-muted);">
-              <div>Custo: <strong>R$ ${s.cost.toFixed(2)}</strong></div>
-              <div>Venda: <strong>R$ ${s.suggested.toFixed(2)}</strong></div>
-              <div style="margin-top: 10px; color: var(--text-main); font-weight: 600;">${count} Clientes Ativos</div>
+          <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <h3 style="margin-bottom: 15px; font-size: 1.2rem; color: var(--text-main);">${s.name}</h3>
+              <div style="font-size: 0.95rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>Custo:<br><strong style="color: var(--text-main);">R$ ${s.cost.toFixed(2)}</strong></div>
+                <div>Venda:<br><strong style="color: var(--text-main);">R$ ${s.suggested.toFixed(2)}</strong></div>
+                <div style="grid-column: span 2; padding-top: 10px; border-top: 1px dashed var(--border-color);">
+                  Referência Mercado: <strong style="color: var(--text-main);">R$ ${s.marketPrice.toFixed(2)}</strong>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 20px; padding: 15px; background: var(--bg-main); border-radius: var(--radius-md);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="font-size: 0.85rem; color: var(--text-muted);">Lucro Unitário / Margem</span>
+                <span style="font-weight: 600; color: #059669;">R$ ${profitPerUnit.toFixed(2)} (${margin}%)</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                <span style="font-size: 0.9rem; font-weight: 500;">${count} Clientes Ativos</span>
+                <div style="text-align: right;">
+                 <span style="font-size: 0.75rem; color: var(--text-muted); display: block;">Lucro Total</span>
+                 <span style="font-weight: 700; color: var(--blue-petroleum);">R$ ${totalProfit.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           </div>
         `;
@@ -421,25 +566,38 @@ const renderMarket = async (container) => {
   container.innerHTML = `
     <h1>Referência de Mercado (ADMIN)</h1>
     <div class="card" style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); margin-top: 20px; overflow-x: auto; border: 1px solid var(--border-color);">
-      <table class="data-table" style="width: 100%; border-collapse: collapse;">
-        <thead style="background: var(--navy-dark); color: white; text-align: left;">
-          <tr>
-            <th style="padding: 15px;">Serviço</th>
-            <th style="padding: 15px;">Preço Oficial</th>
-            <th style="padding: 15px;">Diferença</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${services.map(s => `
+        <table class="data-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+          <thead style="background: var(--navy-dark); color: white; text-align: left;">
             <tr>
-              <td style="padding: 15px; font-weight: 600;">${s.name}</td>
-              <td style="padding: 15px;">R$ ${s.marketPrice.toFixed(2)}</td>
-              <td style="padding: 15px; color: #059669;">- R$ ${(s.marketPrice - s.suggested).toFixed(2)}</td>
+              <th style="padding: 15px;">Serviço</th>
+              <th style="padding: 15px;">Compra</th>
+              <th style="padding: 15px;">Venda (Meu Preço)</th>
+              <th style="padding: 15px;">Preço Oficial/Mercado</th>
+              <th style="padding: 15px;">Diferença</th>
+              <th style="padding: 15px;">Lucro Unitário</th>
+              <th style="padding: 15px;">Markup %</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            ${services.map(s => {
+    const diff = s.marketPrice - s.suggested;
+    const profit = s.suggested - s.cost;
+    const markup = s.cost > 0 ? ((profit / s.cost) * 100).toFixed(1) : 0;
+    return `
+              <tr>
+                <td style="padding: 15px; font-weight: 600;">${s.name}</td>
+                <td style="padding: 15px;">R$ ${s.cost.toFixed(2)}</td>
+                <td style="padding: 15px; color: var(--blue-petroleum); font-weight: 600;">R$ ${s.suggested.toFixed(2)}</td>
+                <td style="padding: 15px;">R$ ${s.marketPrice.toFixed(2)}</td>
+                <td style="padding: 15px; color: #059669; font-weight: 500;">- R$ ${diff.toFixed(2)}</td>
+                <td style="padding: 15px; font-weight: 600;">R$ ${profit.toFixed(2)}</td>
+                <td style="padding: 15px; color: var(--text-muted);">${markup}%</td>
+              </tr>
+              `;
+  }).join('')}
+          </tbody>
+        </table>
+      </div>
   `;
 };
 
@@ -476,7 +634,7 @@ window.exportToCSV = async () => {
   const customers = await DataStore.getCustomers();
   let csv = 'Nome,Servico,Venda,Custo,Lucro,Vencimento,Status\n';
   customers.forEach(c => {
-    csv += `${c.name},${c.service},${c.sellPrice},${c.costPrice},${c.sellPrice - c.costPrice},${c.dueDate},${c.status}\n`;
+    csv += `${c.name},${c.service},${c.sellPrice},${c.costPrice},${c.sellPrice - c.costPrice},${c.dueDate},${c.status} \n`;
   });
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
@@ -494,12 +652,12 @@ const renderSettings = async (container) => {
   container.innerHTML = `
     <h1>Configurações</h1>
     <div class="card" style="background: var(--bg-card); padding: 30px; border-radius: var(--radius-lg); max-width: 500px; margin-top: 20px; border: 1px solid var(--border-color);">
-      <div class="form-group" style="margin-bottom: 20px;">
-        <label style="display: block; margin-bottom: 8px; font-weight: 600;">Chave PIX para Mensagens</label>
-        <input type="text" id="pixKeyInput" value="${settings.pixKey}" class="form-control" style="width: 100%;">
+        <div class="form-group" style="margin-bottom: 20px;">
+          <label style="display: block; margin-bottom: 8px; font-weight: 600;">Chave PIX para Mensagens</label>
+          <input type="text" id="pixKeyInput" value="${settings.pixKey}" class="form-control" style="width: 100%;">
+        </div>
+        <button class="btn btn-primary" id="saveSettingsBtn">Salvar Configurações</button>
       </div>
-      <button class="btn btn-primary" id="saveSettingsBtn">Salvar Configurações</button>
-    </div>
   `;
 
   document.getElementById('saveSettingsBtn').onclick = async () => {
