@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Clientes | Admin Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div id="app">
+    <!-- Layout Principal -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <i data-lucide="shield-check"></i>
+          <span>Admin<span>Core</span></span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-view="dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-view="customers">
+          <i data-lucide="users"></i>
+          <span>Clientes</span>
+        </a>
+        <a href="#" class="nav-item" data-view="services">
+          <i data-lucide="package"></i>
+          <span>Serviços</span>
+        </a>
+        <a href="#" class="nav-item" data-view="market">
+          <i data-lucide="trending-up"></i>
+          <span>Mercado</span>
+        </a>
+        <a href="#" class="nav-item" data-view="financial">
+          <i data-lucide="wallet"></i>
+          <span>Financeiro</span>
+        </a>
+        <a href="#" class="nav-item" data-view="settings">
+          <i data-lucide="settings"></i>
+          <span>Configurações</span>
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+      <header class="top-bar">
+        <div class="search-bar">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Buscar clientes ou serviços..." id="globalSearch">
+        </div>
+        <div class="user-actions">
+          <button class="btn-icon" id="themeToggle" title="Alternar Tema">
+            <i data-lucide="moon"></i>
+          </button>
+          <button class="btn btn-primary" id="addCustomerBtn">
+            <i data-lucide="plus"></i>
+            Novo Cliente
+          </button>
+          <div class="profile-info">
+            <div class="avatar">A</div>
+            <span>Administrador</span>
+          </div>
+        </div>
+      </header>
+
+      <section id="content-area" class="content-area">
+        <!-- Dynamic Content Loads Here -->
+      </section>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-container" class="modal-overlay hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <h2 id="modal-title">Título do Modal</h2>
+          <button class="btn-close" id="closeModal"><i data-lucide="x"></i></button>
+        </div>
+        <div class="modal-body" id="modal-body">
+          <!-- Modal Content -->
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="module" src="/main.js"></script>
+</body>
+
+</html>
