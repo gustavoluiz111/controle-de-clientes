@@ -6,7 +6,11 @@ let currentView = 'dashboard';
 let searchTerm = '';
 
 // Initialize Icons
-const initIcons = () => lucide.createIcons();
+const initIcons = () => {
+  if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+  }
+};
 
 // Theme Management
 const initTheme = () => {
@@ -70,18 +74,28 @@ const renderView = async () => {
   const contentArea = document.getElementById('content-area');
   if (!contentArea) return;
 
-  if (currentView === 'dashboard') {
-    await renderDashboard(contentArea);
-  } else if (currentView === 'customers') {
-    await renderCustomers(contentArea);
-  } else if (currentView === 'services') {
-    await renderServices(contentArea);
-  } else if (currentView === 'market') {
-    await renderMarket(contentArea);
-  } else if (currentView === 'financial') {
-    await renderFinancial(contentArea);
-  } else if (currentView === 'settings') {
-    await renderSettings(contentArea);
+  // Loading State
+  if (contentArea.innerHTML === '') {
+    contentArea.innerHTML = '<div style="display:flex; justify-content:center; padding: 50px;"><div class="loader">Carregando dados...</div></div>';
+  }
+
+  try {
+    if (currentView === 'dashboard') {
+      await renderDashboard(contentArea);
+    } else if (currentView === 'customers') {
+      await renderCustomers(contentArea);
+    } else if (currentView === 'services') {
+      await renderServices(contentArea);
+    } else if (currentView === 'market') {
+      await renderMarket(contentArea);
+    } else if (currentView === 'financial') {
+      await renderFinancial(contentArea);
+    } else if (currentView === 'settings') {
+      await renderSettings(contentArea);
+    }
+  } catch (error) {
+    console.error("Render View Error:", error);
+    contentArea.innerHTML = `<div style="padding: 20px; color: var(--red-vibrant);">Erro ao carregar vista: ${error.message}</div>`;
   }
 
   initIcons();
@@ -153,6 +167,12 @@ const renderDashboard = async (container) => {
 const initChart = (revenue, profit) => {
   const ctx = document.getElementById('mainChart');
   if (!ctx) return;
+
+  // Check if Chart is available
+  if (typeof Chart === 'undefined') {
+    console.warn("Chart.js not loaded yet.");
+    return;
+  }
 
   new Chart(ctx, {
     type: 'line',
@@ -389,7 +409,7 @@ const renderServices = async (container) => {
             </div>
           </div>
         `;
-  }).join('')}
+  }).join('') || '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Nenhum serviço encontrado.</p>'}
     </div>
   `;
   initIcons();
@@ -490,11 +510,14 @@ const renderSettings = async (container) => {
 };
 
 // Boot
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   initTheme();
   initSearch();
   initIcons();
   initNavigation();
+
+  // Initial Render
+  await renderView();
 
   // Subscribe to real-time updates
   DataStore.subscribeCustomers(() => {
@@ -504,4 +527,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // Global Add Btn from Top Bar
   const topAddBtn = document.getElementById('addCustomerBtn');
   if (topAddBtn) topAddBtn.onclick = () => window.showCustomerModal();
+
+  const closeModal = document.getElementById('closeModal');
+  if (closeModal) closeModal.onclick = () => document.getElementById('modal-container').classList.add('hidden');
 });

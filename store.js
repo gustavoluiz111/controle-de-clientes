@@ -7,7 +7,8 @@ import {
   deleteDoc,
   onSnapshot,
   query,
-  orderBy
+  orderBy,
+  getDoc
 } from "firebase/firestore";
 
 // Collection Names
@@ -40,10 +41,10 @@ const DEFAULT_SETTINGS = {
   pixKey: 'Sua Chave PIX Aqui'
 };
 
-// Local cache to speed up renders
+// Local cache
 let customersCache = [];
 let servicesCache = [];
-let settingsCache = DEFAULT_SETTINGS;
+let settingsCache = null;
 
 export const DataStore = {
   // Listeners for real-time updates
@@ -52,14 +53,20 @@ export const DataStore = {
     return onSnapshot(q, (snapshot) => {
       customersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       callback(customersCache);
+    }, (error) => {
+      console.error("Firestore Subscribe Error:", error);
     });
   },
 
   async getCustomers() {
     if (customersCache.length > 0) return customersCache;
-    const q = query(collection(db, COLLECTIONS.CUSTOMERS), orderBy('name'));
-    const snapshot = await getDocs(q);
-    customersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    try {
+      const q = query(collection(db, COLLECTIONS.CUSTOMERS), orderBy('name'));
+      const snapshot = await getDocs(q);
+      customersCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.error("Error getting customers:", e);
+    }
     return customersCache;
   },
 
@@ -74,30 +81,38 @@ export const DataStore = {
 
   async getServices() {
     if (servicesCache.length > 0) return servicesCache;
-    const snapshot = await getDocs(collection(db, COLLECTIONS.SERVICES));
-    if (snapshot.empty) {
-      // Seed initial services
-      for (const service of DEFAULT_SERVICES) {
-        await setDoc(doc(db, COLLECTIONS.SERVICES, String(service.id)), service);
+    try {
+      const snapshot = await getDocs(collection(db, COLLECTIONS.SERVICES));
+      if (snapshot.empty) {
+        // Seed initial services
+        for (const service of DEFAULT_SERVICES) {
+          await setDoc(doc(db, COLLECTIONS.SERVICES, String(service.id)), service);
+        }
+        servicesCache = DEFAULT_SERVICES;
+      } else {
+        servicesCache = snapshot.docs.map(doc => doc.data());
       }
-      servicesCache = DEFAULT_SERVICES;
-    } else {
-      servicesCache = snapshot.docs.map(doc => doc.data());
+    } catch (e) {
+      console.error("Error getting services:", e);
+      return DEFAULT_SERVICES; // Fallback to default
     }
     return servicesCache;
   },
 
   async getSettings() {
-    const docRef = doc(db, COLLECTIONS.SETTINGS, 'admin');
-    const snapshot = await getDocs(collection(db, COLLECTIONS.SETTINGS)); // Simplificado para fins de exemplo
-    // Em uma implementação real, buscaríamos o documento específico
-    // Mas para o Admin Setup, vamos usar um doc fixo
-    const adminDoc = await getDocs(query(collection(db, COLLECTIONS.SETTINGS)));
-    if (adminDoc.empty) {
-      await setDoc(doc(db, COLLECTIONS.SETTINGS, 'admin'), DEFAULT_SETTINGS);
-      settingsCache = DEFAULT_SETTINGS;
-    } else {
-      settingsCache = adminDoc.docs[0].data();
+    if (settingsCache) return settingsCache;
+    try {
+      const docRef = doc(db, COLLECTIONS.SETTINGS, 'admin');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        settingsCache = docSnap.data();
+      } else {
+        await setDoc(docRef, DEFAULT_SETTINGS);
+        settingsCache = DEFAULT_SETTINGS;
+      }
+    } catch (e) {
+      console.error("Error getting settings:", e);
+      return DEFAULT_SETTINGS;
     }
     return settingsCache;
   },
