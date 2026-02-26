@@ -99,6 +99,14 @@ export const DataStore = {
     return servicesCache;
   },
 
+  async syncDefaultServices() {
+    for (const service of DEFAULT_SERVICES) {
+      await setDoc(doc(db, COLLECTIONS.SERVICES, String(service.id)), service);
+    }
+    servicesCache = [...DEFAULT_SERVICES];
+    return servicesCache;
+  },
+
   async getSettings() {
     if (settingsCache) return settingsCache;
     try {

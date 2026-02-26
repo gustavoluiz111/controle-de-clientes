@@ -491,21 +491,54 @@ window.generateMessage = async (id) => {
   const settings = await DataStore.getSettings();
   const isRenewal = customer.status === 'Vencido';
 
-  let msg = isRenewal ? `Olá, ${customer.name} ! 👋\nSua assinatura de ${customer.service} vence em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\nPara renovar por R$ ${customer.sellPrice.toFixed(2)}, envie o PIX na chave abaixo: \n\nChave PIX: ${settings.pixKey} \n\nAssim que confirmar, já renovo pra você 👍`
-    : `Olá, ${customer.name} ! 👋\nO serviço ${customer.service} está disponível por R$ ${customer.sellPrice.toFixed(2)} mensal.\n\nFunciona assim: \n• Acesso individual\n• Pode usar na TV, celular ou computador\n• Suporte durante a assinatura\n\nPagamento via PIX: \nChave: ${settings.pixKey} \n\nApós o pagamento, envio o acesso imediatamente.`;
+  const templateRenovacao = `Olá, ${customer.name} ! 👋\nSua assinatura de ${customer.service} vence em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\nPara renovar por R$ ${customer.sellPrice.toFixed(2)}, envie o PIX na chave abaixo: \n\nChave PIX: ${settings.pixKey} \n\nAssim que confirmar, já renovo pra você 👍`;
+
+  const templateBoasVindas = `Olá, ${customer.name} ! 👋\nO serviço ${customer.service} já está liberado!\n\nFunciona assim: \n• Acesso individual\n• Pode usar na TV, celular ou computador\n• Suporte durante a assinatura\n\nSeu vencimento ficou para: ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}\n\nQualquer dúvida, estou à disposição!`;
+
+  const templateVenda = `Olá, ${customer.name} ! 👋\nO serviço ${customer.service} está saindo por R$ ${customer.sellPrice.toFixed(2)} mensal.\n\nPagamento via PIX: \nChave: ${settings.pixKey} \n\nApós o pagamento, envio o acesso imediatamente.`;
+
+  const templateAtraso = `Olá, ${customer.name}. Tudo bem?\nPassando para lembrar que sua assinatura de ${customer.service} (R$ ${customer.sellPrice.toFixed(2)}) venceu em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\n\nPara não perder o acesso, realize o PIX na chave abaixo assim que puder:\n\nChave PIX: ${settings.pixKey}\n\nSe já efetuou o pagamento, desconsidere esta mensagem. Obrigado!`;
+
+  let msg = isRenewal ? templateRenovacao : templateBoasVindas;
 
   const modal = document.getElementById('modal-container');
-  document.getElementById('modal-title').innerText = 'Mensagem Gerada';
+  document.getElementById('modal-title').innerText = 'Mensagens Prontas';
   document.getElementById('modal-body').innerHTML = `
-    <div style="background: var(--bg-main); padding: 20px; border-radius: var(--radius-md); white-space: pre-wrap; font-family: monospace; font-size: 0.9rem; margin-bottom: 20px; color: var(--text-main);">${msg}</div>
-    <button class="btn btn-primary" style="width: 100%;" id="copyMsg">Copiar e Fechar</button>
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-muted);">Tipo de Mensagem</label>
+        <select id="msgTypeSelect" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-family: inherit; outline: none;">
+            <option value="renovacao" ${isRenewal ? 'selected' : ''}>Aviso de Renovação</option>
+            <option value="boasvindas" ${!isRenewal ? 'selected' : ''}>Boas-Vindas (Acesso Liberado)</option>
+            <option value="venda">Oferta / Venda</option>
+            <option value="atraso">Cobrança de Atraso</option>
+        </select>
+    </div>
+    <textarea id="finalMsgText" rows="10" style="width: 100%; padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); font-family: monospace; font-size: 0.9rem; resize: vertical; margin-bottom: 20px;">${msg}</textarea>
+    <button class="btn btn-primary" style="width: 100%; margin-bottom: 10px;" id="copyMsg">Copiar Mensagem</button>
+    <button class="btn" style="width: 100%; background: var(--bg-main);" id="closeMsgModal">Fechar</button>
   `;
+
   modal.classList.remove('hidden');
+
+  const select = document.getElementById('msgTypeSelect');
+  const textarea = document.getElementById('finalMsgText');
+
+  select.onchange = (e) => {
+    if (e.target.value === 'renovacao') textarea.value = templateRenovacao;
+    else if (e.target.value === 'boasvindas') textarea.value = templateBoasVindas;
+    else if (e.target.value === 'venda') textarea.value = templateVenda;
+    else if (e.target.value === 'atraso') textarea.value = templateAtraso;
+  };
+
   document.getElementById('copyMsg').onclick = () => {
-    navigator.clipboard.writeText(msg).then(() => {
-      alert('Copiado!');
+    navigator.clipboard.writeText(textarea.value).then(() => {
+      alert('Mensagem copiada!');
       modal.classList.add('hidden');
     });
+  };
+
+  document.getElementById('closeMsgModal').onclick = () => {
+    modal.classList.add('hidden');
   };
 };
 
@@ -657,6 +690,14 @@ const renderSettings = async (container) => {
           <input type="text" id="pixKeyInput" value="${settings.pixKey}" class="form-control" style="width: 100%;">
         </div>
         <button class="btn btn-primary" id="saveSettingsBtn">Salvar Configurações</button>
+        
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid var(--border-color);">
+        
+        <h3 style="margin-bottom: 15px;">Manutenção de Dados</h3>
+        <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;">Use este botão caso não esteja vendo todos os seus serviços na aba "Serviços". Ele irá forçar a sincronização da sua tabela oficial (com os 16 serviços originais) para o banco de dados nuvem.</p>
+        <button class="btn" id="syncServicesBtn" style="background: var(--red-vibrant); color: white; width: 100%;">
+            Sincronizar Tabela de Serviços (Firebase)
+        </button>
       </div>
   `;
 
@@ -665,6 +706,20 @@ const renderSettings = async (container) => {
     await DataStore.saveSettings({ pixKey: newKey });
     alert('Configurações salvas!');
   };
+
+  const syncBtn = document.getElementById('syncServicesBtn');
+  if (syncBtn) {
+    syncBtn.onclick = async () => {
+      if (confirm('Isso irá recarregar todos os 16 serviços padrão para o banco da nuvem. Deseja continuar?')) {
+        syncBtn.innerText = 'Sincronizando...';
+        syncBtn.disabled = true;
+        await DataStore.syncDefaultServices();
+        alert('Serviços sincronizados com sucesso!');
+        syncBtn.innerText = 'Sincronizar Tabela de Serviços (Firebase)';
+        syncBtn.disabled = false;
+      }
+    };
+  }
 };
 
 // Boot
