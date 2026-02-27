@@ -1,5 +1,6 @@
 import './style.css';
 import { DataStore } from './store.js';
+import { initDarkVeil } from './dark-veil.js';
 
 // App State
 let currentView = 'dashboard';
@@ -724,6 +725,7 @@ const renderSettings = async (container) => {
 
 // Boot
 window.addEventListener('DOMContentLoaded', async () => {
+  initDarkVeil();
   initTheme();
   initSearch();
   initIcons();
