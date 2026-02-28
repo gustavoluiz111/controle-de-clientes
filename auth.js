@@ -77,15 +77,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Eventos
-    if (loginBtn) {
-        loginBtn.addEventListener("click", attemptLogin);
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", (e) => {
+            e.preventDefault(); // Evita recarregar a página no GitHub Pages
+            attemptLogin();
+        });
     }
 
-    if (loginInput) {
-        loginInput.addEventListener("keypress", (e) => {
-            if (e.key === "Enter") {
-                attemptLogin();
-            }
+    // Fallback: em caso do loginBtn estar fora de um form
+    if (loginBtn && !loginForm) {
+        loginBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            attemptLogin();
         });
     }
 });

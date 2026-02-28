@@ -32,7 +32,7 @@
         <p>Insira a senha de administrador para acessar o Controle de Clientes.</p>
       </div>
 
-      <div class="login-form">
+      <form class="login-form" id="login-form">
         <label for="admin-password">Senha de Acesso</label>
         <div class="input-group">
           <i data-lucide="lock"></i>
@@ -40,10 +40,10 @@
         </div>
         <p id="login-error" class="login-error">Senha incorreta.</p>
 
-        <button id="login-btn" class="btn btn-primary login-btn">
+        <button type="submit" id="login-btn" class="btn btn-primary login-btn">
           Acessar <i data-lucide="arrow-right"></i>
         </button>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -67,6 +67,10 @@
         <a href="#" class="nav-item" data-view="services">
           <i data-lucide="package"></i>
           <span>Serviços</span>
+        </a>
+        <a href="./produtos.html" class="nav-item" target="_blank">
+          <i data-lucide="external-link"></i>
+          <span>Ver Produtos</span>
         </a>
         <a href="#" class="nav-item" data-view="market">
           <i data-lucide="trending-up"></i>

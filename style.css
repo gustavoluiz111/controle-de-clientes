@@ -692,6 +692,15 @@ h3,
 
 .login-header .logo {
     margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-header .logo-img {
+    max-height: 80px;
+    /* Ajuste para não ficar enorme demais */
+    object-fit: contain;
 }
 
 .login-header h2 {
