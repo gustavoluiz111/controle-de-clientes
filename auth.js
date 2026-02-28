@@ -3,7 +3,7 @@
  * Bloqueia a visualização do painel no client-side.
  */
 
-const AUTH_HASH = "f25ad90715f74930e74f0d655733065b43dbd6df022a8ecdf3ab010d297dae01"; // SHA-256 para 121415gugu
+const AUTH_HASH = "f25ad90715f74930e74f0d65f3381abadca48c52decad495733065b43dbd6df0"; // SHA-256 para 121415gugu
 const AUTH_KEY = "admin_auth_passed";
 
 // Utilitário para gerar SHA-256 nativo do navegador
