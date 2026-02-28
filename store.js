@@ -25,16 +25,21 @@ const DEFAULT_SERVICES = [
   { id: 4, name: 'Claro tv+', cost: 8, suggested: 25, marketPrice: 59.90 },
   { id: 5, name: 'Premiere', cost: 6, suggested: 12, marketPrice: 59.90 },
   { id: 6, name: 'HBO Max Premium', cost: 10, suggested: 18, marketPrice: 34.90 },
-  { id: 7, name: 'Disney Premium', cost: 10, suggested: 18, marketPrice: 33.90 },
+  { id: 7, name: 'Disney+ Premium', cost: 10, suggested: 18, marketPrice: 33.90 },
   { id: 8, name: 'Paramount+', cost: 7, suggested: 15, marketPrice: 19.90 },
   { id: 9, name: 'Prime Video', cost: 6, suggested: 12, marketPrice: 14.90 },
   { id: 10, name: 'Prime Video + 5 adicionais', cost: 12.90, suggested: 22.90, marketPrice: 50.00 },
   { id: 11, name: 'Prime Video + 9 adicionais', cost: 16.90, suggested: 29.90, marketPrice: 70.00 },
   { id: 12, name: 'PlayPlus', cost: 8, suggested: 14, marketPrice: 15.90 },
-  { id: 13, name: 'ChatGPT', cost: 19.90, suggested: 45, marketPrice: 99.00 },
+  { id: 13, name: 'Spotify (Trimestral)', cost: 18, suggested: 38, marketPrice: 34.90 },
   { id: 14, name: 'YouTube Premium (Anual)', cost: 65, suggested: 120, marketPrice: 249.00 },
   { id: 15, name: 'Canva Pro (Anual)', cost: 55, suggested: 100, marketPrice: 289.00 },
-  { id: 16, name: 'Produto digital', cost: 10, suggested: 25, marketPrice: 40.00 }
+  { id: 16, name: 'Adobe Creative Cloud (Mensal)', cost: 19.90, suggested: 50, marketPrice: 290.00 },
+  { id: 17, name: 'CapCut Pro (28 dias)', cost: 12.90, suggested: 26, marketPrice: 34.90 },
+  { id: 18, name: 'Gemini Pro', cost: 10, suggested: 20, marketPrice: 45.00 },
+  { id: 19, name: 'ChatGPT (Plano Premium)', cost: 19.90, suggested: 45, marketPrice: 99.00 },
+  { id: 20, name: 'Free Fire', cost: 0, suggested: 0, marketPrice: 0 },
+  { id: 21, name: 'Produto Digital', cost: 10, suggested: 25, marketPrice: 40.00 }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -97,6 +102,27 @@ export const DataStore = {
       return DEFAULT_SERVICES; // Fallback to default
     }
     return servicesCache;
+  },
+
+  async saveService(service) {
+    const id = service.id ? String(service.id) : String(Date.now());
+    service.id = parseInt(id) || id;
+    await setDoc(doc(db, COLLECTIONS.SERVICES, String(id)), service);
+    servicesCache = []; // Clear cache to force refresh
+  },
+
+  async deleteService(id) {
+    await deleteDoc(doc(db, COLLECTIONS.SERVICES, String(id)));
+    servicesCache = []; // Clear cache to force refresh
+  },
+
+  subscribeServices(callback) {
+    return onSnapshot(collection(db, COLLECTIONS.SERVICES), (snapshot) => {
+      servicesCache = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(servicesCache);
+    }, (error) => {
+      console.error("Firestore Services Subscribe Error:", error);
+    });
   },
 
   async syncDefaultServices() {

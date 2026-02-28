@@ -40,15 +40,109 @@ const updateThemeIcon = (theme) => {
   }
 };
 
-// Search Management
+// Search Management - Global Search with Dropdown
 const initSearch = () => {
   const searchInput = document.getElementById('globalSearch');
-  if (searchInput) {
-    searchInput.oninput = (e) => {
-      searchTerm = e.target.value.toLowerCase();
+  const dropdown = document.getElementById('searchDropdown');
+  if (!searchInput || !dropdown) return;
+
+  let debounceTimer;
+
+  searchInput.oninput = (e) => {
+    searchTerm = e.target.value.toLowerCase();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      if (searchTerm.length > 0) {
+        showSearchDropdown(searchTerm, dropdown);
+      } else {
+        dropdown.classList.add('hidden');
+      }
       renderView();
-    };
+    }, 200);
+  };
+
+  searchInput.onfocus = () => {
+    if (searchTerm.length > 0) {
+      showSearchDropdown(searchTerm, dropdown);
+    }
+  };
+
+  // Close dropdown on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-bar-wrapper')) {
+      dropdown.classList.add('hidden');
+    }
+  });
+};
+
+const showSearchDropdown = async (term, dropdown) => {
+  const customers = await DataStore.getCustomers();
+  const services = await DataStore.getServices();
+
+  const matchedCustomers = customers.filter(c =>
+    c.name.toLowerCase().includes(term) ||
+    (c.whatsapp && c.whatsapp.toLowerCase().includes(term)) ||
+    (c.service && c.service.toLowerCase().includes(term))
+  ).slice(0, 5);
+
+  const matchedServices = services.filter(s =>
+    s.name.toLowerCase().includes(term)
+  ).slice(0, 5);
+
+  if (matchedCustomers.length === 0 && matchedServices.length === 0) {
+    dropdown.innerHTML = '<div class="search-no-results">Nenhum resultado encontrado.</div>';
+    dropdown.classList.remove('hidden');
+    return;
   }
+
+  let html = '';
+
+  if (matchedCustomers.length > 0) {
+    html += '<div class="search-section-title">Clientes</div>';
+    matchedCustomers.forEach(c => {
+      html += `
+        <div class="search-item" data-action="go-customer" data-id="${c.id}">
+          <div class="search-item-icon customer"><i data-lucide="user"></i></div>
+          <div class="search-item-info">
+            <div class="search-item-name">${c.name}</div>
+            <div class="search-item-detail">${c.service || '-'} · ${c.status}</div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  if (matchedServices.length > 0) {
+    html += '<div class="search-section-title">Serviços</div>';
+    matchedServices.forEach(s => {
+      html += `
+        <div class="search-item" data-action="go-service" data-id="${s.id}">
+          <div class="search-item-icon service"><i data-lucide="package"></i></div>
+          <div class="search-item-info">
+            <div class="search-item-name">${s.name}</div>
+            <div class="search-item-detail">Custo: R$ ${(s.cost || 0).toFixed(2)} · Venda: R$ ${(s.suggested || 0).toFixed(2)}</div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  dropdown.innerHTML = html;
+  dropdown.classList.remove('hidden');
+  initIcons();
+
+  // Attach click handlers to search items
+  dropdown.querySelectorAll('.search-item').forEach(item => {
+    item.onclick = () => {
+      const action = item.dataset.action;
+      dropdown.classList.add('hidden');
+      if (action === 'go-customer') {
+        switchView('customers');
+      } else if (action === 'go-service') {
+        switchView('services');
+      }
+    };
+  });
 };
 
 // Navigation Controller
@@ -550,14 +644,17 @@ const renderServices = async (container) => {
   const filtered = services.filter(s => s.name.toLowerCase().includes(searchTerm));
 
   container.innerHTML = `
-    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
       <h1>Gestão de Serviços</h1>
+      <button class="btn btn-primary" id="addServiceBtn">
+        <i data-lucide="plus"></i> Novo Serviço
+      </button>
     </div>
     <div class="grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
       ${filtered.map(s => {
     const activeClients = customers.filter(c => String(c.serviceId) === String(s.id) && c.status === 'Ativo');
     const count = activeClients.length;
-    const profitPerUnit = s.suggested - s.cost;
+    const profitPerUnit = (s.suggested || 0) - (s.cost || 0);
     const margin = s.suggested > 0 ? ((profitPerUnit / s.suggested) * 100).toFixed(1) : 0;
     const totalProfit = count * profitPerUnit;
 
@@ -566,10 +663,10 @@ const renderServices = async (container) => {
             <div>
               <h3 style="margin-bottom: 15px; font-size: 1.2rem; color: var(--text-main);">${s.name}</h3>
               <div style="font-size: 0.95rem; color: var(--text-muted); display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <div>Custo:<br><strong style="color: var(--text-main);">R$ ${s.cost.toFixed(2)}</strong></div>
-                <div>Venda:<br><strong style="color: var(--text-main);">R$ ${s.suggested.toFixed(2)}</strong></div>
+                <div>Custo:<br><strong style="color: var(--text-main);">R$ ${(s.cost || 0).toFixed(2)}</strong></div>
+                <div>Venda:<br><strong style="color: var(--text-main);">R$ ${(s.suggested || 0).toFixed(2)}</strong></div>
                 <div style="grid-column: span 2; padding-top: 10px; border-top: 1px dashed var(--border-color);">
-                  Referência Mercado: <strong style="color: var(--text-main);">R$ ${s.marketPrice.toFixed(2)}</strong>
+                  Referência Mercado: <strong style="color: var(--text-main);">R$ ${(s.marketPrice || 0).toFixed(2)}</strong>
                 </div>
               </div>
             </div>
@@ -586,12 +683,105 @@ const renderServices = async (container) => {
                 </div>
               </div>
             </div>
+            <div class="service-card-actions">
+              <button class="btn-icon" onclick="window.editService('${s.id}')" title="Editar Serviço">
+                <i data-lucide="edit"></i>
+              </button>
+              <button class="btn-icon delete" onclick="window.deleteService('${s.id}')" title="Excluir Serviço">
+                <i data-lucide="trash"></i>
+              </button>
+            </div>
           </div>
         `;
   }).join('') || '<p style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">Nenhum serviço encontrado.</p>'}
     </div>
   `;
+
+  document.getElementById('addServiceBtn').onclick = () => window.showServiceModal();
   initIcons();
+};
+
+// --- Service Modal ---
+window.showServiceModal = (service = null) => {
+  const modal = document.getElementById('modal-container');
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+
+  title.innerText = service ? 'Editar Serviço' : 'Novo Serviço';
+  body.innerHTML = `
+    <form id="serviceForm" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Nome do Serviço</label>
+        <input type="text" name="name" value="${service?.name || ''}" placeholder="Ex: Netflix Premium" required>
+      </div>
+      <div class="form-group">
+        <label>Custo (Compra) R$</label>
+        <input type="number" step="0.01" name="cost" id="svcCost" value="${service?.cost || ''}" required>
+      </div>
+      <div class="form-group">
+        <label>Preço de Venda R$</label>
+        <input type="number" step="0.01" name="suggested" id="svcSuggested" value="${service?.suggested || ''}" required>
+      </div>
+      <div class="form-group">
+        <label>Preço Mercado (Referência) R$</label>
+        <input type="number" step="0.01" name="marketPrice" value="${service?.marketPrice || ''}" required>
+      </div>
+      <div class="form-group">
+        <label>Lucro Automático</label>
+        <input type="text" id="svcAutoProfit" value="R$ 0.00" readonly style="background: var(--bg-main); font-weight: 600; color: #059669;">
+      </div>
+      <div style="grid-column: span 2; display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Serviço</button>
+        <button type="button" class="btn" id="closeServiceModalBtn" style="background: var(--bg-main);">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  modal.classList.remove('hidden');
+  document.getElementById('closeServiceModalBtn').onclick = () => modal.classList.add('hidden');
+
+  const costInput = document.getElementById('svcCost');
+  const suggestedInput = document.getElementById('svcSuggested');
+  const profitOutput = document.getElementById('svcAutoProfit');
+
+  const updateSvcCalc = () => {
+    const cost = parseFloat(costInput.value) || 0;
+    const sell = parseFloat(suggestedInput.value) || 0;
+    profitOutput.value = `R$ ${(sell - cost).toFixed(2)}`;
+  };
+
+  costInput.addEventListener('input', updateSvcCalc);
+  suggestedInput.addEventListener('input', updateSvcCalc);
+  if (service) updateSvcCalc();
+
+  const form = document.getElementById('serviceForm');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const newService = {
+      id: service?.id || Date.now(),
+      name: fd.get('name'),
+      cost: parseFloat(fd.get('cost')),
+      suggested: parseFloat(fd.get('suggested')),
+      marketPrice: parseFloat(fd.get('marketPrice'))
+    };
+    await DataStore.saveService(newService);
+    modal.classList.add('hidden');
+    renderView();
+  };
+};
+
+window.editService = async (id) => {
+  const services = await DataStore.getServices();
+  const service = services.find(s => String(s.id) === String(id));
+  if (service) window.showServiceModal(service);
+};
+
+window.deleteService = async (id) => {
+  if (confirm('Tem certeza que deseja excluir este serviço?')) {
+    await DataStore.deleteService(id);
+    renderView();
+  }
 };
 
 // --- Market Module ---
@@ -736,6 +926,10 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Subscribe to real-time updates
   DataStore.subscribeCustomers(() => {
+    renderView();
+  });
+
+  DataStore.subscribeServices(() => {
     renderView();
   });
 
