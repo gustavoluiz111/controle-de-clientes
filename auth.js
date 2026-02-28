@@ -3,7 +3,7 @@
  * Bloqueia a visualização do painel no client-side.
  */
 
-const AUTH_HASH = "8095b9278bd0a2aa1cd53f668172c7a0d4c80309228d5d6ec126b86411f13b63"; // SHA-256 para 121415gugu
+const AUTH_HASH = "f25ad90715f74930e74f0d655733065b43dbd6df022a8ecdf3ab010d297dae01"; // SHA-256 para 121415gugu
 const AUTH_KEY = "admin_auth_passed";
 
 // Utilitário para gerar SHA-256 nativo do navegador
@@ -43,13 +43,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Tentar o login
     async function attemptLogin() {
-        const password = loginInput.value;
+        const password = loginInput.value.trim();
         if (!password) return;
 
         loginBtn.innerHTML = "<i class='bi bi-arrow-repeat spin'></i>";
         loginBtn.disabled = true;
 
         const hashedInput = await sha256(password);
+        console.log("Senha digitada:", password);
+        console.log("Hash gerado pelo navegador:", hashedInput);
+        console.log("Hash esperado:", AUTH_HASH);
 
         if (hashedInput === AUTH_HASH) {
             // Sucesso
