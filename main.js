@@ -1,11 +1,13 @@
 import './style.css';
 import { DataStore } from './store.js';
 import { initDarkVeil } from './dark-veil.js';
+import { Hyperspeed } from './hyperspeed.js';
 
 // App State
 let currentView = 'dashboard';
 let searchTerm = '';
 let statusFilter = 'Todos';
+let hyperspeedInstance = null;
 
 // Initialize Icons
 const initIcons = () => {
@@ -20,6 +22,9 @@ const initTheme = () => {
   document.documentElement.setAttribute('data-theme', theme);
   updateThemeIcon(theme);
 
+  // Initialize Hyperspeed for dark theme
+  initBackground(theme);
+
   const toggle = document.getElementById('themeToggle');
   if (toggle) {
     toggle.onclick = () => {
@@ -28,9 +33,34 @@ const initTheme = () => {
       document.documentElement.setAttribute('data-theme', next);
       localStorage.setItem('theme', next);
       updateThemeIcon(next);
+      initBackground(next);
     };
   }
 };
+
+const initBackground = (theme) => {
+  const bgContainer = document.getElementById('hyperspeed-bg');
+  if (!bgContainer) return;
+
+  if (theme === 'dark') {
+    if (!hyperspeedInstance) {
+      bgContainer.style.display = 'block';
+      hyperspeedInstance = new Hyperspeed({
+        container: bgContainer,
+        speed: 1.5,
+        starCount: 1500,
+        starDist: 300,
+        starSize: 0.8
+      });
+    }
+  } else {
+    if (hyperspeedInstance) {
+      hyperspeedInstance.destroy();
+      hyperspeedInstance = null;
+      bgContainer.style.display = 'none';
+    }
+  }
+}
 
 const updateThemeIcon = (theme) => {
   const icon = document.querySelector('#themeToggle i');

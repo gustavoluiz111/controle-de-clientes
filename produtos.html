@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nossos Produtos | Assinaturas com Preço Acessível</title>
+    <meta name="description"
+        content="Acesse as melhores assinaturas de streamings, música e ferramentas com preço acessível. Globoplay, Premiere, Canva Pro, Netflix e muito mais.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <link rel="stylesheet" href="./produtos.css">
+
+    <!-- ES Module Shims for ThreeJS import map -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.150.1/build/three.module.js"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Hyperspeed Background Container -->
+    <div id="hyperspeed-bg"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; pointer-events: none;"></div>
+
+    <!-- Floating WhatsApp -->
+    <a href="https://wa.me/5581995275520" target="_blank" class="float-wa" aria-label="Falar no WhatsApp">
+        <i class="bi bi-whatsapp"></i>
+    </a>
+
+    <header class="page-header reveal">
+        <div class="container">
+            <h1 class="page-title">Nossos Produtos</h1>
+            <p class="page-subtitle">Acesse as melhores assinaturas com preço acessível</p>
+
+            <div class="client-counter">
+                <i class="bi bi-check2"></i>
+                <span><span id="counter" data-target="250">0</span>+ clientes atendidos</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+
+        <!-- Seção 1: Streamings -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-icon">
+                    <i class="bi bi-tv"></i>
+                </div>
+                <h2 class="section-title">Streamings</h2>
+            </div>
+
+            <div class="products-grid">
+
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon"><i class="bi bi-play-circle"></i></div>
+                    <h3 class="product-name">Globoplay + Canais</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 15</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Globoplay%20%2B%20Canais%20por%20R%24%2015"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon"><i class="bi bi-film"></i></div>
+                    <h3 class="product-name">Globoplay + Canais + Telecine</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 20</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Globoplay%20%2B%20Canais%20%2B%20Telecine%20por%20R%24%2020"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-3">
+                    <div class="card-icon"><i class="bi bi-star"></i></div>
+                    <h3 class="product-name">Globoplay + Canais + Premiere</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 23</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Globoplay%20%2B%20Canais%20%2B%20Premiere%20por%20R%24%2023"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon"><i class="bi bi-display"></i></div>
+                    <h3 class="product-name">Claro tv+</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 25</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Claro%20tv%2B%20por%20R%24%2025"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon"><i class="bi bi-record-circle"></i></div>
+                    <h3 class="product-name">Premiere</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 12</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Premiere%20por%20R%24%2012"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-3">
+                    <div class="badge badge-oferta">OFERTA</div>
+                    <div class="card-icon" style="color: #9333ea"><i class="bi bi-camera-reels"></i></div>
+                    <h3 class="product-name">HBO Max Premium</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 18</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20HBO%20Max%20Premium%20por%20R%24%2018"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon" style="color: #3b82f6"><i class="bi bi-magic"></i></div>
+                    <h3 class="product-name">Disney Premium</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 18</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Disney%20Premium%20por%20R%24%2018"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon" style="color: #0ea5e9"><i class="bi bi-mountain"></i></div>
+                    <h3 class="product-name">Paramount+</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 10 <span>a</span> R$ 15</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Paramount%2B"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-3">
+                    <div class="badge badge-oferta">OFERTA</div>
+                    <div class="card-icon" style="color: #0ea5e9"><i class="bi bi-box-seam"></i></div>
+                    <h3 class="product-name">Prime Video</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 10 <span>a</span> R$ 12</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Prime%20Video"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon" style="color: #0ea5e9"><i class="bi bi-ui-checks-grid"></i></div>
+                    <h3 class="product-name">Prime Video + 5 adicionais</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 17,90 <span>a</span> 22,90</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Prime%20Video%20%2B%205%20adicionais"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon" style="color: #0ea5e9"><i class="bi bi-grid-3x3-gap"></i></div>
+                    <h3 class="product-name">Prime Video + 9 adicionais</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 22,90 <span>a</span> 29,90</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Prime%20Video%20%2B%209%20adicionais"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-3">
+                    <div class="card-icon"><i class="bi bi-collection-play"></i></div>
+                    <h3 class="product-name">PlayPlus</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 14</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20PlayPlus%20por%20R%24%2014"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Seção 2: Música -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-icon" style="color: #10b981;">
+                    <i class="bi bi-music-note-beamed"></i>
+                </div>
+                <h2 class="section-title">Música</h2>
+            </div>
+
+            <div class="products-grid">
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon" style="color: #10b981"><i class="bi bi-spotify"></i></div>
+                    <h3 class="product-name">Spotify (Trimestral)</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 38</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Spotify%20Trimestral%20por%20R%24%2038"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon" style="color: #ef4444"><i class="bi bi-youtube"></i></div>
+                    <h3 class="product-name">YouTube Premium (Anual)</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 65</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20YouTube%20Premium%20Anual%20por%20R%24%2065"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Seção 3: Ferramentas -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-icon" style="color: #8b5cf6;">
+                    <i class="bi bi-tools"></i>
+                </div>
+                <h2 class="section-title">Ferramentas</h2>
+            </div>
+
+            <div class="products-grid">
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon" style="color: #0ea5e9"><i class="bi bi-palette"></i></div>
+                    <h3 class="product-name">Canva Pro (Anual)</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 55</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Canva%20Pro%20Anual%20por%20R%24%2055"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon" style="color: #ef4444"><i class="bi bi-bezier2"></i></div>
+                    <h3 class="product-name">Adobe Creative Cloud (Mensal)</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 50</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Adobe%20Creative%20Cloud%20Mensal%20por%20R%24%2050"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-3">
+                    <div class="card-icon" style="color: #a855f7"><i class="bi bi-scissors"></i></div>
+                    <h3 class="product-name">CapCut Pro (28 dias)</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 26</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20CapCut%20Pro%2028%20dias%20por%20R%24%2026"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-1">
+                    <div class="badge badge-mais-vendido">MAIS VENDIDO</div>
+                    <div class="card-icon" style="color: #10b981"><i class="bi bi-stars"></i></div>
+                    <h3 class="product-name">Gemini Pro + Veo + 2TB</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 40</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Gemini%20Pro%20%2B%20Veo%20%2B%202TB%20por%20R%24%2040"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Seção 4: Contas e Digitais -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-icon" style="color: #f59e0b;">
+                    <i class="bi bi-controller"></i>
+                </div>
+                <h2 class="section-title">Contas e Digitais</h2>
+            </div>
+
+            <div class="products-grid" style="grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));">
+                <article class="product-card reveal delay-1">
+                    <div class="card-icon" style="color: #f59e0b"><i class="bi bi-joystick"></i></div>
+                    <h3 class="product-name">Contas de Free Fire</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price" style="font-size: 1.5rem">Sob consulta</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20consultar%20sobre%20Contas%20de%20Free%20Fire"
+                        target="_blank" class="btn-buy">
+                        Consultar Opções <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+
+                <article class="product-card reveal delay-2">
+                    <div class="card-icon" style="color: #3b82f6"><i class="bi bi-box-fill"></i></div>
+                    <h3 class="product-name">Produto Digital</h3>
+                    <div class="product-price-wrapper">
+                        <div class="product-price">R$ 25</div>
+                    </div>
+                    <a href="https://wa.me/5581995275520?text=Ol%C3%A1%2C%20gostaria%20de%20comprar%20Produto%20Digital%20por%20R%24%2025"
+                        target="_blank" class="btn-buy">
+                        Comprar Agora <i class="bi bi-arrow-right-short"></i>
+                    </a>
+                </article>
+            </div>
+        </section>
+
+        <!-- Seção 5: Avaliações (Marquee) -->
+        <section class="section">
+            <div class="section-header reveal">
+                <div class="section-icon" style="color: #ec4899;">
+                    <i class="bi bi-chat-quote"></i>
+                </div>
+                <h2 class="section-title">O que dizem nossos clientes</h2>
+            </div>
+
+            <div class="marquee-container reveal" id="reviewsContainer">
+                <div class="marquee-fade-top"></div>
+
+                <!-- Coluna 1 -->
+                <div class="marquee-content" id="marquee-col-1"></div>
+
+                <!-- Coluna 2 (Reverse) -->
+                <div class="marquee-content reverse" id="marquee-col-2"></div>
+
+                <div class="marquee-fade-bottom"></div>
+            </div>
+        </section>
+
+        <!-- Container para o Animated List (Flutuante na direita para estilo profissional) -->
+        <div class="animated-list-container" id="recentPurchases"
+            style="position: fixed; right: 24px; top: 100px; width: 300px; z-index: 50; pointer-events: none;"></div>
+
+    </main>
+
+    <script type="module">
+        import { Hyperspeed } from './hyperspeed.js';
+
+        // Initialize Hyperspeed on load for dark theme
+        const bgContainer = document.getElementById('hyperspeed-bg');
+        if (bgContainer) {
+            const hyperspeed = new Hyperspeed({
+                container: bgContainer,
+                speed: 1.2,
+                starCount: 1500,
+                colors: [0x00f0ff, 0xff003c, 0xfcee0a] // Cyberpunk Colors
+            });
+        }
+    </script>
+
+    <script>
+        // SplitText Implementation
+        function initSplitText() {
+            const title = document.querySelector('.page-title');
+            if (!title) return;
+            const text = title.innerText;
+            title.innerHTML = '';
+            title.classList.add('split-parent');
+
+            // Split char by char
+            text.split('').forEach((char, i) => {
+                const span = document.createElement('span');
+                span.innerText = char === ' ' ? '\u00A0' : char;
+                span.className = 'split-char';
+                span.style.animationDelay = `${i * 0.05}s`;
+                title.appendChild(span);
+            });
+        }
+        initSplitText();
+
+        // Reviews Data (Marquee)
+        const reviews = [
+            { name: "Carlos S.", username: "@carlos.silva", body: "Melhor preço que já encontrei! O acesso do Globoplay saiu na hora.", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Carlos" },
+            { name: "Mariana R.", username: "@mah.ribeiro", body: "Estava pagando muito caro no Spotify. Com vocês economizei muito!", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Mariana" },
+            { name: "João V.", username: "@joaovitor", body: "Recomendo DEMAIS. Suporte excelente no WhatsApp.", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Joao" },
+            { name: "Ana P.", username: "@anapaula", body: "Canva Pro ativado na minha conta certinho. Muito profissional.", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Ana" },
+            { name: "Lucas M.", username: "@lucasm", body: "Prime Video com Paramount funcionando 100%. Podem confiar.", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Lucas" },
+            { name: "Fernanda", username: "@nanda_tv", body: "Não vivo sem meu YouTube Premium agora rsrs ❤️", img: "https://api.dicebear.com/7.x/notionists/svg?seed=Fernanda" }
+        ];
+
+        function createReviewCard(review) {
+            return `
+                <figure class="review-card">
+                    <div class="review-header">
+                        <img class="review-avatar" src="${review.img}" alt="${review.name}">
+                        <div>
+                            <div class="review-name">${review.name}</div>
+                            <div class="review-username">${review.username}</div>
+                        </div>
+                    </div>
+                    <blockquote class="review-body">${review.body}</blockquote>
+                </figure>
+            `;
+        }
+
+        // Populate Marquee
+        const col1 = document.getElementById('marquee-col-1');
+        const col2 = document.getElementById('marquee-col-2');
+        if (col1 && col2) {
+            const firstHalf = reviews.slice(0, 3);
+            const secondHalf = reviews.slice(3, 6);
+
+            // Duplicate to create infinite loop effect
+            col1.innerHTML = [...firstHalf, ...firstHalf, ...firstHalf].map(createReviewCard).join('');
+            col2.innerHTML = [...secondHalf, ...secondHalf, ...secondHalf].map(createReviewCard).join('');
+        }
+
+        // Animated List Implementation
+        const productsList = [
+            { icon: 'bi-play-circle', color: '#ec4899', name: 'Globoplay + Canais', time: 'Há 5 min' },
+            { icon: 'bi-spotify', color: '#10b981', name: 'Spotify Trimestral', time: 'Há 12 min' },
+            { icon: 'bi-palette', color: '#0ea5e9', name: 'Canva Pro Anual', time: 'Há 25 min' },
+            { icon: 'bi-youtube', color: '#ef4444', name: 'YouTube Premium', time: 'Há 1 hora' }
+        ];
+
+        const animatedContainer = document.getElementById('recentPurchases');
+        let currentIndex = 0;
+
+        function showNextAnimatedItem() {
+            if (!animatedContainer) return;
+
+            const product = productsList[currentIndex % productsList.length];
+            currentIndex++;
+
+            const el = document.createElement('div');
+            el.className = 'animated-item';
+            el.innerHTML = `
+                <div class="list-icon" style="background: ${product.color}20; color: ${product.color}">
+                    <i class="bi ${product.icon}"></i>
+                </div>
+                <div style="flex:1">
+                    <div style="font-size:0.85rem; font-weight:600; color:#fff">1 nova compra</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted)">${product.name}</div>
+                </div>
+                <div style="font-size:0.7rem; color:var(--text-muted)">${product.time}</div>
+            `;
+
+            // Auto hide logic
+            if (animatedContainer.children.length > 2) {
+                const first = animatedContainer.firstChild;
+                first.style.opacity = '0';
+                first.style.transform = 'scale(0.9) translateY(-20px)';
+                setTimeout(() => first.remove(), 500);
+            }
+
+            animatedContainer.appendChild(el);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    el.classList.add('active');
+                });
+            });
+
+            // Schedule next popup (random time between 8s and 25s)
+            const nextTime = Math.random() * (25000 - 8000) + 8000;
+            setTimeout(showNextAnimatedItem, nextTime);
+        }
+
+        // Start Animated List if on Desktop
+        if (window.innerWidth > 1024) {
+            setTimeout(showNextAnimatedItem, 3000);
+        }
+
+        // Reveal Animations
+        function reveal() {
+            var reveals = document.querySelectorAll(".reveal");
+            for (var i = 0; i < reveals.length; i++) {
+                var windowHeight = window.innerHeight;
+                var elementTop = reveals[i].getBoundingClientRect().top;
+                var elementVisible = 100;
+                if (elementTop < windowHeight - elementVisible) {
+                    reveals[i].classList.add("active");
+                }
+            }
+        }
+        window.addEventListener("scroll", reveal);
+        // Trigger on load
+        setTimeout(reveal, 100);
+
+        // Counter Animation
+        const counter = document.getElementById('counter');
+        const target = +counter.getAttribute('data-target');
+        const duration = 2000;
+        const increment = target / (duration / 16); // 60fps
+
+        let current = 0;
+        const updateCounter = () => {
+            current += increment;
+            if (current < target) {
+                counter.innerText = Math.ceil(current);
+                requestAnimationFrame(updateCounter);
+            } else {
+                counter.innerText = target;
+            }
+        };
+        setTimeout(updateCounter, 500);
+
+        // Stagger delays for grid items
+        document.querySelectorAll('.products-grid').forEach(grid => {
+            const cards = grid.querySelectorAll('.product-card');
+            cards.forEach((card, index) => {
+                card.style.transitionDelay = `${(index % 4) * 0.15}s`;
+            });
+        });
+    </script>
+</body>
+
+</html>
