@@ -328,7 +328,7 @@ h3,
     height: 100%;
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(4px);
-    z-index: 1000;
+    z-index: 99999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -340,6 +340,8 @@ h3,
     color: var(--text-main);
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     border-radius: var(--radius-lg);
     padding: 30px;
     box-shadow: var(--shadow-lg);

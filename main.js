@@ -151,7 +151,7 @@ const showSearchDropdown = async (term, dropdown) => {
           <div class="search-item-icon service"><i data-lucide="package"></i></div>
           <div class="search-item-info">
             <div class="search-item-name">${s.name}</div>
-            <div class="search-item-detail">Custo: R$ ${(s.cost || 0).toFixed(2)} · Venda: R$ ${(s.suggested || 0).toFixed(2)}</div>
+            <div class="search-item-detail">Venda: R$ ${(s.suggested || 0).toFixed(2)}</div>
           </div>
         </div>
       `;
@@ -327,9 +327,11 @@ const renderDashboard = async (container) => {
     </div>
 
     <div class="charts-section" style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; margin-top: 30px;">
-      <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color);">
+      <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color); display: flex; flex-direction: column;">
         <h3>Faturamento vs Lucro</h3>
-        <canvas id="mainChart" height="200"></canvas>
+        <div style="position: relative; height: 300px; width: 100%; flex: 1;">
+          <canvas id="mainChart"></canvas>
+        </div>
       </div>
       <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color);">
         <h3>Próximos Vencimentos</h3>
