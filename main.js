@@ -180,9 +180,12 @@ const initNavigation = () => {
   const navItems = document.querySelectorAll('.nav-item');
   navItems.forEach(item => {
     item.addEventListener('click', (e) => {
-      e.preventDefault();
       const view = item.getAttribute('data-view');
-      switchView(view);
+      // Apenas previne padrão se for uma view interna
+      if (view) {
+        e.preventDefault();
+        switchView(view);
+      }
     });
   });
 };
