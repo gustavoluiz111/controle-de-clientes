@@ -7,6 +7,7 @@ import { Hyperspeed } from './hyperspeed.js';
 let currentView = 'dashboard';
 let searchTerm = '';
 let statusFilter = 'Todos';
+let dashboardTimeRange = '30';
 let hyperspeedInstance = null;
 
 // Initialize Icons
@@ -213,6 +214,8 @@ const renderView = async () => {
       await renderDashboard(contentArea);
     } else if (currentView === 'customers') {
       await renderCustomers(contentArea);
+    } else if (currentView === 'leads') {
+      await renderLeads(contentArea);
     } else if (currentView === 'services') {
       await renderServices(contentArea);
     } else if (currentView === 'market') {
@@ -232,11 +235,23 @@ const renderView = async () => {
 
 // Dashboard Renderer
 const renderDashboard = async (container) => {
-  const customers = await DataStore.getCustomers();
+  const allCustomers = await DataStore.getCustomers();
 
-  const activeCount = customers.filter(c => c.status === 'Ativo').length;
-  const expiredCount = customers.filter(c => c.status === 'Vencido').length;
-  const activeCustomers = customers.filter(c => c.status === 'Ativo');
+  // Date Filtering Logic
+  const now = new Date();
+  const filteredCustomers = allCustomers.filter(c => {
+    if (dashboardTimeRange === 'total') return true;
+    const days = parseInt(dashboardTimeRange);
+    const dateToCompare = new Date(c.startDate || c.dueDate || Date.now());
+    const diffTime = Math.abs(now - dateToCompare);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= days;
+  });
+
+  const activeCount = filteredCustomers.filter(c => c.status === 'Ativo').length;
+  const expiredCount = filteredCustomers.filter(c => c.status === 'Vencido').length;
+  const leadsCount = filteredCustomers.filter(c => c.status === 'Potencial').length;
+  const activeCustomers = filteredCustomers.filter(c => c.status === 'Ativo');
 
   const revenue = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
   const cost = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.costPrice) || 0), 0);
@@ -264,13 +279,30 @@ const renderDashboard = async (container) => {
     if (prof > maxProfit) { maxProfit = prof; topProfitService = srv; }
   }
 
+  const conversionRate = (activeCount + expiredCount + leadsCount) > 0
+    ? ((activeCount + expiredCount) / (activeCount + expiredCount + leadsCount) * 100).toFixed(1)
+    : 0;
+
   container.innerHTML = `
-    <h1 class="mb-4">Dashboard Geral</h1>
+    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
+      <h1>Dashboard Geral</h1>
+      <select id="dashboardRange" style="padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-family: inherit; outline: none;">
+        <option value="30" ${dashboardTimeRange === '30' ? 'selected' : ''}>Últimos 30 dias</option>
+        <option value="60" ${dashboardTimeRange === '60' ? 'selected' : ''}>Últimos 60 dias</option>
+        <option value="90" ${dashboardTimeRange === '90' ? 'selected' : ''}>Últimos 90 dias</option>
+        <option value="total" ${dashboardTimeRange === 'total' ? 'selected' : ''}>Total (Desde o início)</option>
+      </select>
+    </div>
     <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
       <div class="stat-card active">
         <span class="label">Clientes Ativos</span>
         <span class="value">${activeCount}</span>
         <i data-lucide="users" class="icon-bg"></i>
+      </div>
+      <div class="stat-card" style="background: var(--navy-dark); color: white;">
+        <span class="label" style="opacity: 0.8;">Taxa de Conversão</span>
+        <span class="value">${conversionRate}%</span>
+        <i data-lucide="trending-up" class="icon-bg" style="opacity: 0.1;"></i>
       </div>
       <div class="stat-card">
         <span class="label">Vencidos</span>
@@ -291,16 +323,6 @@ const renderDashboard = async (container) => {
         <span class="label" style="opacity: 0.8;">Ticket Médio</span>
         <span class="value">R$ ${ticketMedio.toFixed(2)}</span>
         <i data-lucide="receipt" class="icon-bg" style="opacity: 0.1;"></i>
-      </div>
-      <div class="stat-card" style="background: var(--navy-dark); color: white;">
-        <span class="label" style="opacity: 0.8;">Mais Vendido</span>
-        <span class="value" style="font-size: 1.2rem; margin-top: 5px;">${topService}</span>
-        <i data-lucide="award" class="icon-bg" style="opacity: 0.1;"></i>
-      </div>
-      <div class="stat-card" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-        <span class="label">Mais Lucrativo</span>
-        <span class="value" style="font-size: 1.1rem; color: #059669; margin-top: 5px;">${topProfitService}</span>
-        <i data-lucide="trending-up" class="icon-bg"></i>
       </div>
     </div>
 
@@ -329,6 +351,11 @@ const renderDashboard = async (container) => {
     </div>
   `;
 
+  document.getElementById('dashboardRange').onchange = (e) => {
+    dashboardTimeRange = e.target.value;
+    renderView();
+  };
+
   initChart(revenue, profit);
 };
 
@@ -342,10 +369,18 @@ const initChart = (revenue, profit) => {
     return;
   }
 
+  // Destroy previous chart instance if it exists to avoid overlaps
+  const existingChart = Chart.getChart(ctx);
+  if (existingChart) {
+    existingChart.destroy();
+  }
+
+  const label = dashboardTimeRange === 'total' ? 'Todo o Período' : `Últimos ${dashboardTimeRange} Dias`;
+
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: ['Mês Atual'],
+      labels: [label],
       datasets: [{
         label: 'Faturamento',
         data: [revenue],
@@ -364,7 +399,15 @@ const initChart = (revenue, profit) => {
     },
     options: {
       responsive: true,
-      plugins: { legend: { position: 'bottom' } }
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' }
+      },
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
     }
   });
 };
@@ -526,6 +569,7 @@ window.showCustomerModal = async (customer = null) => {
         <select name="status">
           <option value="Ativo" ${customer?.status === 'Ativo' ? 'selected' : ''}>Ativo</option>
           <option value="Vencido" ${customer?.status === 'Vencido' ? 'selected' : ''}>Vencido</option>
+          <option value="Potencial" ${customer?.status === 'Potencial' ? 'selected' : ''}>Potencial</option>
           <option value="Cancelado" ${customer?.status === 'Cancelado' ? 'selected' : ''}>Cancelado</option>
         </select>
       </div>
@@ -627,7 +671,9 @@ window.generateMessage = async (id) => {
 
   const templateAtraso = `Olá, ${customer.name}. Tudo bem?\nPassando para lembrar que sua assinatura de ${customer.service} (R$ ${customer.sellPrice.toFixed(2)}) venceu em ${new Date(customer.dueDate).toLocaleDateString('pt-BR')}.\n\nPara não perder o acesso, realize o PIX na chave abaixo assim que puder:\n\nChave PIX: ${settings.pixKey}\n\nSe já efetuou o pagamento, desconsidere esta mensagem. Obrigado!`;
 
-  let msg = isRenewal ? templateRenovacao : templateBoasVindas;
+  const templateOferta = `Olá, ${customer.name} ! 👋\nVi que você tem interesse no serviço ${customer.service}.\n\nEstamos com uma oferta especial hoje! 🚀\nDe R$ ${customer.sellPrice.toFixed(2)} por apenas R$ ${(customer.sellPrice * 0.9).toFixed(2)} no primeiro mês.\n\nPara garantir esse desconto e liberar o acesso agora, envie o PIX:\nChave: ${settings.pixKey}\n\nTe espero!`;
+
+  let msg = isRenewal ? templateRenovacao : (customer.status === 'Potencial' ? templateOferta : templateBoasVindas);
 
   const modal = document.getElementById('modal-container');
   document.getElementById('modal-title').innerText = 'Mensagens Prontas';
@@ -636,8 +682,9 @@ window.generateMessage = async (id) => {
         <label style="display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--text-muted);">Tipo de Mensagem</label>
         <select id="msgTypeSelect" style="width: 100%; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); font-family: inherit; outline: none;">
             <option value="renovacao" ${isRenewal ? 'selected' : ''}>Aviso de Renovação</option>
-            <option value="boasvindas" ${!isRenewal ? 'selected' : ''}>Boas-Vindas (Acesso Liberado)</option>
-            <option value="venda">Oferta / Venda</option>
+            <option value="boasvindas" ${customer.status === 'Ativo' ? 'selected' : ''}>Boas-Vindas (Acesso Liberado)</option>
+            <option value="oferta" ${customer.status === 'Potencial' ? 'selected' : ''}>Oferta Especial (Boas-Vindas)</option>
+            <option value="venda">Oferta / Venda Geral</option>
             <option value="atraso">Cobrança de Atraso</option>
         </select>
     </div>
@@ -656,6 +703,7 @@ window.generateMessage = async (id) => {
     else if (e.target.value === 'boasvindas') textarea.value = templateBoasVindas;
     else if (e.target.value === 'venda') textarea.value = templateVenda;
     else if (e.target.value === 'atraso') textarea.value = templateAtraso;
+    else if (e.target.value === 'oferta') textarea.value = templateOferta;
   };
 
   document.getElementById('copyMsg').onclick = () => {
@@ -668,6 +716,81 @@ window.generateMessage = async (id) => {
   document.getElementById('closeMsgModal').onclick = () => {
     modal.classList.add('hidden');
   };
+};
+
+// --- Leads Module ---
+const renderLeads = async (container) => {
+  const allCustomers = await DataStore.getCustomers();
+  const leads = allCustomers.filter(c => {
+    const isPotential = c.status === 'Potencial';
+    const matchesSearch = c.name.toLowerCase().includes(searchTerm) || c.service.toLowerCase().includes(searchTerm);
+    return isPotential && matchesSearch;
+  });
+
+  container.innerHTML = `
+    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 15px;">
+      <h1>Clientes Potenciais (Leads)</h1>
+      <button class="btn btn-primary" id="addLeadBtn">
+        <i data-lucide="user-plus"></i> Novo Potencial
+      </button>
+    </div>
+
+    <div class="table-card card" style="background: var(--bg-card); border-radius: var(--radius-lg); box-shadow: var(--shadow); overflow-x: auto; border: 1px solid var(--border-color);">
+      <table class="data-table" style="width: 100%; border-collapse: collapse; min-width: 800px;">
+        <thead style="background: var(--bg-main); text-align: left;">
+          <tr>
+            <th style="padding: 15px;">Lead</th>
+            <th style="padding: 15px;">Interesse</th>
+            <th style="padding: 15px;">Data de Cadastro</th>
+            <th style="padding: 15px;">Status</th>
+            <th style="padding: 15px; text-align: right;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${leads.map(c => `
+            <tr>
+              <td style="padding: 15px; font-weight: 500;">
+                <div>${c.name}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${c.whatsapp || '-'}</div>
+              </td>
+              <td style="padding: 15px;">${c.service}</td>
+              <td style="padding: 15px;">${new Date(c.startDate || Date.now()).toLocaleDateString('pt-BR')}</td>
+              <td style="padding: 15px;">
+                <span class="badge" style="padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; 
+                  background: #eff6ff; color: #1e40af;">
+                  ${c.status}
+                </span>
+              </td>
+              <td style="padding: 15px; text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
+                <button class="btn-icon" onclick="window.convertLead('${c.id}')" title="Converter em Cliente Ativo" style="color: #059669;"><i data-lucide="user-check"></i></button>
+                <button class="btn-icon" onclick="window.generateMessage('${c.id}')" title="Enviar Oferta" style="color: var(--blue-petroleum)"><i data-lucide="message-square"></i></button>
+                <button class="btn-icon" onclick="window.editCustomer('${c.id}')" title="Editar"><i data-lucide="edit"></i></button>
+                <button class="btn-icon" onclick="window.deleteCustomer('${c.id}')" title="Excluir" style="color: var(--red-vibrant)"><i data-lucide="trash"></i></button>
+              </td>
+            </tr>
+          `).join('') || '<tr><td colspan="5" style="padding: 40px; text-align: center; color: var(--text-muted);">Nenhum lead encontrado.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+  document.getElementById('addLeadBtn').onclick = () => window.showCustomerModal({ status: 'Potencial' });
+  initIcons();
+};
+
+window.convertLead = async (id) => {
+  const customers = await DataStore.getCustomers();
+  const lead = customers.find(c => String(c.id) === String(id));
+  if (lead && confirm(`Deseja converter ${lead.name} em um cliente ativo agora?`)) {
+    lead.status = 'Ativo';
+    lead.convertedAt = new Date().toISOString();
+    // Set due date to 1 month from now
+    const nextMonth = new Date();
+    nextMonth.setMonth(nextMonth.getMonth() + 1);
+    lead.dueDate = nextMonth.toISOString().split('T')[0];
+    await DataStore.saveCustomer(lead);
+    alert(`${lead.name} agora é um cliente ativo!`);
+    switchView('customers');
+  }
 };
 
 // --- Services Module ---
