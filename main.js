@@ -356,10 +356,48 @@ const renderDashboard = async (container) => {
     renderView();
   };
 
-  initChart(revenue, profit);
+  // Generate Chart Data
+  const chartLabels = [];
+  const chartRevData = [];
+  const chartProfData = [];
+
+  const oldestDate = activeCustomers.reduce((oldest, c) => {
+    const start = new Date(c.startDate || Date.now());
+    return start < oldest ? start : oldest;
+  }, now);
+
+  const totalDays = Math.max(30, Math.ceil((now - oldestDate) / (1000 * 60 * 60 * 24)));
+  const days = dashboardTimeRange === 'total' ? totalDays : parseInt(dashboardTimeRange);
+  const points = 6;
+  const interval = Math.max(1, Math.floor(days / points));
+
+  for (let i = points - 1; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - (i * interval));
+
+    const label = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+    chartLabels.push(label);
+
+    const activeAtDate = activeCustomers.filter(c => {
+      const start = new Date(c.startDate || Date.now());
+      return start <= d;
+    });
+
+    const rev = activeAtDate.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
+    const prof = activeAtDate.reduce((sum, c) => sum + ((parseFloat(c.sellPrice) || 0) - (parseFloat(c.costPrice) || 0)), 0);
+
+    chartRevData.push(rev);
+    chartProfData.push(prof);
+  }
+
+  chartRevData[chartRevData.length - 1] = revenue;
+  chartProfData[chartProfData.length - 1] = profit;
+  chartLabels[chartLabels.length - 1] = 'Hoje';
+
+  initChart(chartLabels, chartRevData, chartProfData);
 };
 
-const initChart = (revenue, profit) => {
+const initChart = (labels, revenueData, profitData) => {
   const ctx = document.getElementById('mainChart');
   if (!ctx) return;
 
@@ -375,22 +413,20 @@ const initChart = (revenue, profit) => {
     existingChart.destroy();
   }
 
-  const label = dashboardTimeRange === 'total' ? 'Todo o Período' : `Últimos ${dashboardTimeRange} Dias`;
-
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: [label],
+      labels: labels,
       datasets: [{
         label: 'Faturamento',
-        data: [revenue],
+        data: revenueData,
         borderColor: '#003B4F',
         backgroundColor: 'rgba(0, 59, 79, 0.1)',
         fill: true,
         tension: 0.4
       }, {
         label: 'Lucro',
-        data: [profit],
+        data: profitData,
         borderColor: '#D90429',
         backgroundColor: 'rgba(217, 4, 41, 0.1)',
         fill: true,
