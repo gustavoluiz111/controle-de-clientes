@@ -334,7 +334,7 @@ const renderDashboard = async (container) => {
       <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); box-shadow: var(--shadow); border: 1px solid var(--border-color);">
         <h3>Próximos Vencimentos</h3>
         <div id="expiring-list" style="margin-top: 15px;">
-          ${customers.filter(c => {
+          ${filteredCustomers.filter(c => {
     const diff = (new Date(c.dueDate) - new Date()) / (1000 * 60 * 60 * 24);
     return diff >= 0 && diff <= 5 && c.status === 'Ativo';
   }).sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).map(c => `
