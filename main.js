@@ -255,7 +255,19 @@ const renderDashboard = async (container) => {
 
   const revenue = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
   const cost = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.costPrice) || 0), 0);
-  const profit = revenue - cost;
+  
+  const allExpenses = await DataStore.getExpenses();
+  const filteredExpenses = allExpenses.filter(e => {
+    if (dashboardTimeRange === 'total') return true;
+    const days = parseInt(dashboardTimeRange);
+    const dateToCompare = new Date(e.date || Date.now());
+    const diffTime = Math.abs(now - dateToCompare);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays <= days;
+  });
+  const otherExpenses = filteredExpenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+  
+  const profit = revenue - cost - otherExpenses;
 
   const ticketMedio = activeCount > 0 ? revenue / activeCount : 0;
 
@@ -481,6 +493,7 @@ const renderCustomers = async (container) => {
           <tr>
             <th style="padding: 15px;">Cliente</th>
             <th style="padding: 15px;">Serviço</th>
+            <th style="padding: 15px;">Dispositivo</th>
             <th style="padding: 15px;">Vencimento</th>
             <th style="padding: 15px;">Status</th>
             <th style="padding: 15px;">Lucro / Margem</th>
@@ -498,6 +511,7 @@ const renderCustomers = async (container) => {
                 <div style="font-size: 0.8rem; color: var(--text-muted);">${c.whatsapp || '-'}</div>
               </td>
               <td style="padding: 15px;">${c.service}</td>
+              <td style="padding: 15px; color: var(--text-muted); font-size: 0.9rem;">${c.device || '-'}</td>
               <td style="padding: 15px; font-weight: 600; color: ${c.status === 'Vencido' ? 'var(--red-vibrant)' : 'inherit'}">${new Date(c.dueDate).toLocaleDateString('pt-BR')}</td>
               <td style="padding: 15px;">
                 <span class="badge" style="padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; 
@@ -511,8 +525,9 @@ const renderCustomers = async (container) => {
                 <div style="font-size: 0.8rem; color: var(--text-muted);">${margin}% Margem</div>
               </td>
               <td style="padding: 15px; text-align: right; display: flex; gap: 6px; justify-content: flex-end;">
-                ${c.status !== 'Ativo' ? `<button class="btn-icon" onclick="window.updateCustomerStatus('${c.id}', 'Ativo')" title="Marcar como Renovado/Ativo" style="color: #059669;"><i data-lucide="check-circle"></i></button>` : ''}
+                <button class="btn-icon" onclick="window.updateCustomerStatus('${c.id}', 'Ativo')" title="Marcar como Renovado/Ativo" style="color: #059669;"><i data-lucide="check-circle"></i></button>
                 ${c.status !== 'Cancelado' ? `<button class="btn-icon" onclick="window.updateCustomerStatus('${c.id}', 'Cancelado')" title="Marcar como Cancelado"><i data-lucide="x-circle"></i></button>` : ''}
+                <button class="btn-icon" onclick='window.showCustomerModal({name: "${c.name}", whatsapp: "${c.whatsapp}", clientId: "${c.clientId}"})' title="Adicionar outra assinatura" style="color: var(--blue-petroleum)"><i data-lucide="plus-circle"></i></button>
                 <button class="btn-icon" onclick="window.generateMessage('${c.id}')" title="Gerar Mensagem" style="color: var(--blue-petroleum)"><i data-lucide="message-square"></i></button>
                 <button class="btn-icon" onclick="window.editCustomer('${c.id}')" title="Editar"><i data-lucide="edit"></i></button>
                 <button class="btn-icon" onclick="window.deleteCustomer('${c.id}')" title="Excluir" style="color: var(--red-vibrant)"><i data-lucide="trash"></i></button>
@@ -575,6 +590,10 @@ window.showCustomerModal = async (customer = null) => {
           ${services.map(s => `<option value="${s.id}" ${customer?.serviceId == s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
         </select>
       </div>
+      <div class="form-group" style="grid-column: span 2;">
+        <label>Dispositivo</label>
+        <input type="text" name="device" value="${customer?.device || ''}" placeholder="Ex: Xiaomi Stick, Smart TV Samsung, Celular...">
+      </div>
       <div class="form-group">
         <label>Custo (Compra)</label>
         <input type="number" step="0.01" name="costPrice" id="costPrice" value="${customer?.costPrice || ''}" required>
@@ -596,11 +615,11 @@ window.showCustomerModal = async (customer = null) => {
 
       <div class="form-group">
         <label>Data Início</label>
-        <input type="date" name="startDate" value="${customer?.startDate || new Date().toISOString().split('T')[0]}" required>
+        <input type="date" name="startDate" id="startDate" value="${customer?.startDate || new Date().toISOString().split('T')[0]}" required>
       </div>
       <div class="form-group">
         <label>Vencimento</label>
-        <input type="date" name="dueDate" value="${customer?.dueDate || ''}" required>
+        <input type="date" name="dueDate" id="dueDate" value="${customer?.dueDate || ''}" required>
       </div>
       <div class="form-group" style="grid-column: span 2;">
         <label>Status</label>
@@ -653,7 +672,24 @@ window.showCustomerModal = async (customer = null) => {
       costInput.value = s.cost;
       sellInput.value = s.suggested;
       updateCalculations();
+      
+      // Auto-set due date if not set
+      const startInput = document.getElementById('startDate');
+      const dueInput = document.getElementById('dueDate');
+      if (startInput.value && !dueInput.value) {
+        const d = new Date(startInput.value);
+        d.setMonth(d.getMonth() + 1);
+        dueInput.value = d.toISOString().split('T')[0];
+      }
     }
+  };
+
+  const startInput = document.getElementById('startDate');
+  const dueInput = document.getElementById('dueDate');
+  startInput.onchange = () => {
+    const d = new Date(startInput.value);
+    d.setMonth(d.getMonth() + 1);
+    dueInput.value = d.toISOString().split('T')[0];
   };
 
   // Initial calculation if editing
@@ -670,12 +706,14 @@ window.showCustomerModal = async (customer = null) => {
       whatsapp: fd.get('whatsapp'),
       serviceId: fd.get('serviceId'),
       service: service?.name || 'Manual',
+      device: fd.get('device'),
       costPrice: parseFloat(fd.get('costPrice')),
       sellPrice: parseFloat(fd.get('sellPrice')),
       startDate: fd.get('startDate'),
       dueDate: fd.get('dueDate'),
       status: fd.get('status'),
-      observations: fd.get('observations')
+      observations: fd.get('observations'),
+      clientId: fd.get('whatsapp').replace(/\D/g, '') // Keep only numbers as clientId
     };
 
     await DataStore.saveCustomer(newCustomer);
@@ -1022,30 +1060,132 @@ const renderMarket = async (container) => {
 // --- Financial Module ---
 const renderFinancial = async (container) => {
   const customers = await DataStore.getCustomers();
-  const totalCost = customers.reduce((sum, c) => sum + c.costPrice, 0);
-  const totalRev = customers.reduce((sum, c) => sum + c.sellPrice, 0);
-  const totalProfit = totalRev - totalCost;
+  const expenses = await DataStore.getExpenses();
+  
+  const activeCustomers = customers.filter(c => c.status === 'Ativo');
+  const revenue = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.sellPrice) || 0), 0);
+  const costOfService = activeCustomers.reduce((sum, c) => sum + (parseFloat(c.costPrice) || 0), 0);
+  
+  const otherExpenses = expenses.reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
+  const totalCost = costOfService + otherExpenses;
+  const netProfit = revenue - totalCost;
 
   container.innerHTML = `
-    <h1>Controle Financeiro Avançado</h1>
-    <div class="stats-grid" style="margin-top: 20px;">
-      <div class="stat-card">
-        <span class="label">Total Investido</span>
+    <div class="view-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+      <h1>Controle Financeiro</h1>
+      <button class="btn btn-primary" id="addExpenseBtn">
+        <i data-lucide="plus"></i> Registrar Despesa
+      </button>
+    </div>
+
+    <div class="stats-grid" style="margin-bottom: 30px;">
+      <div class="stat-card" style="border-left: 4px solid var(--blue-petroleum);">
+        <span class="label">Faturamento (Ativo)</span>
+        <span class="value">R$ ${revenue.toFixed(2)}</span>
+      </div>
+      <div class="stat-card" style="border-left: 4px solid var(--red-vibrant);">
+        <span class="label">Custo Total (Serviços + Gastos)</span>
         <span class="value">R$ ${totalCost.toFixed(2)}</span>
       </div>
-      <div class="stat-card">
-        <span class="label">Total Faturado</span>
-        <span class="value">R$ ${totalRev.toFixed(2)}</span>
-      </div>
-      <div class="stat-card profit">
-        <span class="label">Lucro Líquido</span>
-        <span class="value">R$ ${totalProfit.toFixed(2)}</span>
+      <div class="stat-card profit" style="border-left: 4px solid #059669;">
+        <span class="label">Lucro Líquido Real</span>
+        <span class="value">R$ ${netProfit.toFixed(2)}</span>
       </div>
     </div>
-    <div style="margin-top: 30px;">
-      <button class="btn btn-primary" onclick="window.exportToCSV()">Exportar Relatório CSV</button>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+      <div class="card" style="background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); border: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 15px;">Detalhamento de Custos</h3>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-main); border-radius: 8px;">
+            <span>Custo de Painéis/Assinaturas</span>
+            <span style="font-weight: 600;">R$ ${costOfService.toFixed(2)}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; padding: 10px; background: var(--bg-main); border-radius: 8px;">
+            <span>Despesas Operacionais</span>
+            <span style="font-weight: 600; color: var(--red-vibrant);">R$ ${otherExpenses.toFixed(2)}</span>
+          </div>
+        </div>
+        <div style="margin-top: 20px;">
+          <button class="btn" style="width: 100%;" onclick="window.exportToCSV()">Exportar Relatório CSV</button>
+        </div>
+      </div>
+
+      <div class="card" style="background: var(--bg-card); padding: 20px; border-top: 4px solid var(--red-vibrant); border-radius: var(--radius-lg); border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color);">
+        <h3 style="margin-bottom: 15px;">Últimas Despesas</h3>
+        <div id="expense-list">
+          ${expenses.slice(0, 5).map(e => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid var(--border-color);">
+              <div>
+                <div style="font-weight: 600; font-size: 0.9rem;">${e.description}</div>
+                <div style="font-size: 0.8rem; color: var(--text-muted);">${new Date(e.date).toLocaleDateString('pt-BR')}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-weight: 700; color: var(--red-vibrant);">R$ ${parseFloat(e.amount).toFixed(2)}</span>
+                <button class="btn-icon" onclick="window.deleteExpense('${e.id}')" style="color: var(--red-vibrant); padding: 0;"><i data-lucide="trash-2" style="width: 16px;"></i></button>
+              </div>
+            </div>
+          `).join('') || '<p class="text-muted">Nenhuma despesa registrada.</p>'}
+        </div>
+      </div>
     </div>
   `;
+
+  document.getElementById('addExpenseBtn').onclick = () => window.showExpenseModal();
+  initIcons();
+};
+
+window.showExpenseModal = () => {
+  const modal = document.getElementById('modal-container');
+  const title = document.getElementById('modal-title');
+  const body = document.getElementById('modal-body');
+
+  title.innerText = 'Nova Despesa';
+  body.innerHTML = `
+    <form id="expenseForm">
+      <div class="form-group">
+        <label>Descrição</label>
+        <input type="text" name="description" placeholder="Ex: Aluguel, Internet, Marketing..." required>
+      </div>
+      <div class="form-group">
+        <label>Valor (R$)</label>
+        <input type="number" step="0.01" name="amount" required>
+      </div>
+      <div class="form-group">
+        <label>Data</label>
+        <input type="date" name="date" value="${new Date().toISOString().split('T')[0]}" required>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar Despesa</button>
+        <button type="button" class="btn" id="closeExpenseModalBtn" style="background: var(--bg-main);">Cancelar</button>
+      </div>
+    </form>
+  `;
+
+  modal.classList.remove('hidden');
+  document.getElementById('closeExpenseModalBtn').onclick = () => modal.classList.add('hidden');
+
+  const form = document.getElementById('expenseForm');
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    const fd = new FormData(form);
+    const expense = {
+      id: Date.now(),
+      description: fd.get('description'),
+      amount: parseFloat(fd.get('amount')),
+      date: fd.get('date')
+    };
+    await DataStore.saveExpense(expense);
+    modal.classList.add('hidden');
+    renderView();
+  };
+};
+
+window.deleteExpense = async (id) => {
+  if (confirm('Excluir esta despesa?')) {
+    await DataStore.deleteExpense(id);
+    renderView();
+  }
 };
 
 window.exportToCSV = async () => {
@@ -1124,6 +1264,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   DataStore.subscribeServices(() => {
+    renderView();
+  });
+
+  DataStore.subscribeExpenses(() => {
     renderView();
   });
 

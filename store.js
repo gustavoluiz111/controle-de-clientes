@@ -15,7 +15,8 @@ import {
 const COLLECTIONS = {
   CUSTOMERS: 'customers',
   SERVICES: 'services',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
+  EXPENSES: 'expenses'
 };
 
 const DEFAULT_SERVICES = [
@@ -154,5 +155,34 @@ export const DataStore = {
   async saveSettings(settings) {
     await setDoc(doc(db, COLLECTIONS.SETTINGS, 'admin'), settings);
     settingsCache = settings;
+  },
+
+  // Expenses Management
+  async getExpenses() {
+    try {
+      const q = query(collection(db, COLLECTIONS.EXPENSES), orderBy('date', 'desc'));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    } catch (e) {
+      console.error("Error getting expenses:", e);
+      return [];
+    }
+  },
+
+  async saveExpense(expense) {
+    const id = expense.id ? String(expense.id) : String(Date.now());
+    await setDoc(doc(db, COLLECTIONS.EXPENSES, id), expense);
+  },
+
+  async deleteExpense(id) {
+    await deleteDoc(doc(db, COLLECTIONS.EXPENSES, String(id)));
+  },
+
+  subscribeExpenses(callback) {
+    const q = query(collection(db, COLLECTIONS.EXPENSES), orderBy('date', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+      const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      callback(expenses);
+    });
   }
 };
